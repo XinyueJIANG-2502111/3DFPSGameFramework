@@ -22,3 +22,7 @@
 
 # Keep source, Assets, project files and dependency libraries tracked.
 # Do not globally ignore *.lib, *.dll or directories named Debug.
+
+# CMake build directories
+/build/
+/out/

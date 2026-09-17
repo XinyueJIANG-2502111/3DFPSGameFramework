@@ -28,7 +28,7 @@ DxLib（DirectX 11）をベースに構築された、保守性・拡張性・�
 | **開発環境** | Microsoft Visual Studio 2022 (MSVC v143) |
 | **対象プラットフォーム** | Windows 10 / 11 (x64 / Win32) |
 | **グラフィックス / バックエンド** | DxLib (DirectX 11 版) |
-| **ビルドシステム** | Visual Studio Solution (`DxLib.sln`) / MSBuild |
+| **ビルドシステム** | CMake (3.20+) / Visual Studio Solution (`DxLib.sln`) / MSBuild |
 
 ---
 
@@ -223,8 +223,24 @@ Final27-Assignment/
 2. ツールバーの構成を **`Debug`** または **`Release`**、プラットフォームを **`x64`** に設定します。
 3. `F5` キー（デバッグ開始）または `Ctrl + F5`（デバッグなしで開始）を押下してビルド・実行します。
 
-### 2. コマンドライン（MSBuild）を使用する場合
-PowerShell で以下のコマンドを実行します:
+### 2. CMake を使用する場合
+本リポジトリには `CMakeLists.txt` が整備されており、CMake 経由でのソリューション生成・ビルドが可能です。
+```powershell
+# 構成 (Configure): x64 Visual Studio 2022 ソリューションを生成
+cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+
+# ※ DxLib のパスが異なる場合は -DDXLIB_DIR オプションで指定可能
+# cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DDXLIB_DIR="C:/Path/To/DxLib"
+
+# ビルド (Build: Debug)
+cmake --build build --config Debug
+
+# 実行
+.\build\Debug\3DFPSGameFramework.exe
+```
+
+### 3. コマンドライン（MSBuild）を使用する場合
+PowerShell で既存のソリューションファイルを直接ビルドする場合:
 ```powershell
 # x64 Debug ビルド
 & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" DxLib.sln /p:Configuration=Debug /p:Platform=x64 -m
