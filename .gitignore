@@ -1,0 +1,24 @@
+# Visual Studio workspace cache and per-user settings
+/.vs/
+*.suo
+*.vcxproj.user
+*.sln.docstates
+
+# Visual Studio build outputs and intermediate files
+# Keep these anchored: src/Engine/Debug contains source code.
+/[Dd]ebug/
+/[Rr]elease/
+/x64/
+/x86/
+/Win32/
+/DxLib/[Dd]ebug/
+/DxLib/[Rr]elease/
+/DxLib/x64/
+/DxLib/x86/
+/DxLib/Win32/
+
+# DxLib runtime log
+/Log.txt
+
+# Keep source, Assets, project files and dependency libraries tracked.
+# Do not globally ignore *.lib, *.dll or directories named Debug.

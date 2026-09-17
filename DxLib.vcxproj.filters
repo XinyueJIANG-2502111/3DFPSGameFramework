@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="00-Main">
+      <UniqueIdentifier>{e0bec715-2948-4ccd-9718-58d0c1e15248}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine">
+      <UniqueIdentifier>{35e402a0-6a15-4688-808b-7450f42950e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\A-Core">
+      <UniqueIdentifier>{975fcb55-7d57-484b-8e15-f21a64a1932c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01-Platform">
+      <UniqueIdentifier>{c0011a79-2302-49e1-8d50-2c430e57b8bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01-Platform\A-DxLib">
+      <UniqueIdentifier>{abd3c20f-db34-4a80-b214-2bfd65dd4dff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\B-Input">
+      <UniqueIdentifier>{0ce65557-7eaf-47bf-b9d9-2dd54eb97790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\C-Scene">
+      <UniqueIdentifier>{b80b06bd-4e3d-476c-92be-f547c108f1a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3-Game%28Entities%29">
+      <UniqueIdentifier>{d958c8b3-d9bc-4cf4-a3c4-d7bad048811b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3-Game%28Entities%29\A-Scenes">
+      <UniqueIdentifier>{140f6e12-d44c-4bda-829e-459887ff5598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\Z-Debug">
+      <UniqueIdentifier>{c2672877-a200-4f85-bc64-db4792021b8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\Y-Math">
+      <UniqueIdentifier>{1d47f8fc-9bd5-437b-82c1-53ae5c4bde8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\D-Rendering">
+      <UniqueIdentifier>{0b65ac0d-ca02-482d-b1ae-3fa7f1ff48b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3-Game%28Entities%29\B-Player">
+      <UniqueIdentifier>{e9262c95-90b1-4776-9b51-9526e80c6321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\X-Physics">
+      <UniqueIdentifier>{3138098e-6295-42c5-8f0f-320ef362d5ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\X-Physics\Collision">
+      <UniqueIdentifier>{0429657f-584b-4972-ab45-ca5c004a88bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\X-Physics\Character">
+      <UniqueIdentifier>{2ca0b67d-db66-4625-b172-3c0e74bed5ee}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Engine\Core\Application.h">
+      <Filter>02-Engine\A-Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Core\Time.h">
+      <Filter>02-Engine\A-Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\DxLib\DxApplication.h">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Core\IPlatform.h">
+      <Filter>02-Engine\A-Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Input\IInput.h">
+      <Filter>02-Engine\B-Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Input\InputTypes.h">
+      <Filter>02-Engine\B-Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Input\InputAction.h">
+      <Filter>02-Engine\B-Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\DxLib\DxInput.h">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Scene\IScene.h">
+      <Filter>02-Engine\C-Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Scene\SceneManager.h">
+      <Filter>02-Engine\C-Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Scenes\TestScene.h">
+      <Filter>3-Game%28Entities%29\A-Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Debug\IDebugText.h">
+      <Filter>02-Engine\Z-Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\DxLib\DxDebugText.h">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Math\Vector3.h">
+      <Filter>02-Engine\Y-Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Math\Quaternion.h">
+      <Filter>02-Engine\Y-Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Math\Transform.h">
+      <Filter>02-Engine\Y-Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Camera.h">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ICameraBackend.h">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\DxLib\DxCamera.h">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\FPSCameraController.h">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Player\FPSController.h">
+      <Filter>3-Game%28Entities%29\B-Player</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Input\InputMap.h">
+      <Filter>02-Engine\B-Input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Collision\AABB.h">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Collision\Intersection.h">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Collision\CollisionWorld.h">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Collision\Collider.h">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Collision\CollisionHit.h">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Physics\Character\CharacterController.h">
+      <Filter>02-Engine\X-Physics\Character</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>00-Main</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Core\Application.cpp">
+      <Filter>02-Engine\A-Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Core\Time.cpp">
+      <Filter>02-Engine\A-Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxApplication.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxInput.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Scene\SceneManager.cpp">
+      <Filter>02-Engine\C-Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\Scenes\TestScene.cpp">
+      <Filter>3-Game%28Entities%29\A-Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxDebugText.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\Camera.cpp">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxCamera.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\Player\FPSController.cpp">
+      <Filter>3-Game%28Entities%29\B-Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Input\InputMap.cpp">
+      <Filter>02-Engine\B-Input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\Collision\Intersection.cpp">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\Collision\CollisionWorld.cpp">
+      <Filter>02-Engine\X-Physics\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Physics\Character\CharacterController.cpp">
+      <Filter>02-Engine\X-Physics\Character</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
