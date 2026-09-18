@@ -143,6 +143,15 @@
     <ClInclude Include="src\Engine\Physics\Character\CharacterController.h">
       <Filter>02-Engine\X-Physics\Character</Filter>
     </ClInclude>
+    <ClInclude Include="src\Platform\DxLib\DxModel.h">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Model.h">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ModelLoader.h">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Main.cpp">
@@ -192,6 +201,21 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Physics\Character\CharacterController.cpp">
       <Filter>02-Engine\X-Physics\Character</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxModel.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxModelTest.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\Model.cpp">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\ModelLoader.cpp">
+      <Filter>02-Engine\D-Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\ModelTest.cpp">
+      <Filter>02-Engine\D-Rendering</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

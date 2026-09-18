@@ -178,7 +178,7 @@ void TestScene::OnEnter()
     //
     // JP: 一時的な障害物として使用する
     //     固定 World Collider を作成する。
-    m_testWorldCollider.SetBounds(
+    /*m_testWorldCollider.SetBounds(
         AABB{
             Vector3{
                 -1.0f,
@@ -190,21 +190,49 @@ void TestScene::OnEnter()
                  2.0f,
                  3.0f
             }
-        });
+        });*/
 
     // EN: Both colliders participate in CollisionWorld queries.
     //
     // JP: 両方の Collider を CollisionWorld の
     //     Query 対象として登録する。
-    m_collisionWorld.Register(
+    /*m_collisionWorld.Register(
         m_playerCollider);
 
     m_collisionWorld.Register(
-        m_testWorldCollider);
+        m_testWorldCollider);*/
 
-    m_isColliding = false;
+    m_testWorldCollider.SetBounds(
+        AABB{
+            Vector3{
+                -4.0f,
+                 0.0f,
+                 1.0f
+            },
+            Vector3{
+                 1.0f,
+                 2.0f,
+                 2.0f
+            }
+        });
 
     m_testWorldCollider2.SetBounds(
+        AABB{
+            Vector3{
+                 1.0f,
+                 0.0f,
+                 1.0f
+            },
+            Vector3{
+                 2.0f,
+                 2.0f,
+                 6.0f
+            }
+        });
+
+    //m_isColliding = false;
+
+    /*m_testWorldCollider2.SetBounds(
         AABB{
             Vector3{
                 3.0f,
@@ -216,10 +244,7 @@ void TestScene::OnEnter()
                 2.0f,
                 0.0f
             }
-        });
-
-    m_collisionWorld.Register(
-        m_testWorldCollider2);
+        });*/
 
     m_collisionWorld.Register(
         m_playerCollider);

@@ -9,6 +9,10 @@
 
 #include <memory>
 
+// test
+void RunDxModelTests();
+void RunModelTests();
+
 Application::Application(
     IPlatform& platform,
     IInput& input,
@@ -32,6 +36,11 @@ int Application::Run()
     {
         return -1;
     }
+
+    // test
+    //RunDxModelTests();
+    RunModelTests();
+
 
     Time::Initialize();
 

@@ -39,6 +39,8 @@
     <ClInclude Include="src\Engine\Rendering\Camera.h" />
     <ClInclude Include="src\Engine\Rendering\FPSCameraController.h" />
     <ClInclude Include="src\Engine\Rendering\ICameraBackend.h" />
+    <ClInclude Include="src\Engine\Rendering\Model.h" />
+    <ClInclude Include="src\Engine\Rendering\ModelLoader.h" />
     <ClInclude Include="src\Engine\Scene\IScene.h" />
     <ClInclude Include="src\Engine\Scene\SceneManager.h" />
     <ClInclude Include="src\Game\Player\FPSController.h" />
@@ -47,6 +49,7 @@
     <ClInclude Include="src\Platform\DxLib\DxCamera.h" />
     <ClInclude Include="src\Platform\DxLib\DxDebugText.h" />
     <ClInclude Include="src\Platform\DxLib\DxInput.h" />
+    <ClInclude Include="src\Platform\DxLib\DxModel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Core\Application.cpp" />
@@ -57,6 +60,9 @@
     <ClCompile Include="src\Engine\Physics\Collision\Intersection.cpp" />
     <ClCompile Include="src\Engine\Rendering\Camera.cpp" />
     <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Model.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ModelLoader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ModelTest.cpp" />
     <ClCompile Include="src\Engine\Scene\SceneManager.cpp" />
     <ClCompile Include="src\Game\Player\FPSController.cpp" />
     <ClCompile Include="src\Game\Scenes\TestScene.cpp" />
@@ -65,6 +71,8 @@
     <ClCompile Include="src\Platform\DxLib\DxCamera.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxDebugText.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxInput.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxModel.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxModelTest.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -76,18 +76,31 @@ bool CollisionWorld::ComputeCollision(
         Vector3 normal{};
         float penetration = 0.0f;
 
-        if (ComputePenetration(
+        if (!ComputePenetration(
             collider.GetBounds(),
             other->GetBounds(),
             normal,
             penetration))
         {
-            hit.other = other;
+            /*hit.other = other;
             hit.normal = normal;
             hit.penetration = penetration;
 
-            return true;
+            return true;*/
+
+            continue;
         }
+
+        if (penetration <= 0.0f)
+        {
+            continue;
+        }
+
+        hit.other = other;
+        hit.normal = normal;
+        hit.penetration = penetration;
+
+        return true;
     }
 
     hit = CollisionHit{};
