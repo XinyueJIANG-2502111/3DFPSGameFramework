@@ -2,6 +2,7 @@
 
 #include "Engine/Math/Quaternion.h"
 #include "Engine/Math/Vector3.h"
+#include "Engine/Math/Matrix4.h"
 
 struct Transform
 {
@@ -23,4 +24,20 @@ struct Transform
     // JP: オブジェクトのローカル軸方向のスケール。
     //     (1, 1, 1) は元の大きさを維持する。
     Vector3 scale{ 1.0f };
+
+
+    // EN: Builds the world matrix using the engine's TRS convention.
+    //     With column-vector semantics, T * R * S applies
+    //     Scale -> Rotation -> Translation.
+    //
+    // JP: Engine の TRS 規約に従って World Matrix を生成する。
+    //     Column Vector 規約では T * R * S により、
+    //     Scale -> Rotation -> Translation の順で適用される。
+    Matrix4 ToMatrix() const
+    {
+        return
+            Matrix4::Translation(position) *
+            Matrix4::Rotation(rotation) *
+            Matrix4::Scale(scale);
+    }
 };

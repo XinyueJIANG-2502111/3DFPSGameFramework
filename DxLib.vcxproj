@@ -27,6 +27,7 @@
     <ClInclude Include="src\Engine\Input\InputAction.h" />
     <ClInclude Include="src\Engine\Input\InputMap.h" />
     <ClInclude Include="src\Engine\Input\InputTypes.h" />
+    <ClInclude Include="src\Engine\Math\Matrix4.h" />
     <ClInclude Include="src\Engine\Math\Quaternion.h" />
     <ClInclude Include="src\Engine\Math\Transform.h" />
     <ClInclude Include="src\Engine\Math\Vector3.h" />
@@ -39,8 +40,14 @@
     <ClInclude Include="src\Engine\Rendering\Camera.h" />
     <ClInclude Include="src\Engine\Rendering\FPSCameraController.h" />
     <ClInclude Include="src\Engine\Rendering\ICameraBackend.h" />
+    <ClInclude Include="src\Engine\Rendering\IModelResource.h" />
     <ClInclude Include="src\Engine\Rendering\Model.h" />
+    <ClInclude Include="src\Engine\Rendering\ModelImpl.h" />
+    <ClInclude Include="src\Engine\Rendering\ModelInstance.h" />
     <ClInclude Include="src\Engine\Rendering\ModelLoader.h" />
+    <ClInclude Include="src\Engine\Rendering\ModelResourceAccess.h" />
+    <ClInclude Include="src\Engine\Rendering\Renderer.h" />
+    <ClInclude Include="src\Engine\Resources\ResourceSystem.h" />
     <ClInclude Include="src\Engine\Scene\IScene.h" />
     <ClInclude Include="src\Engine\Scene\SceneManager.h" />
     <ClInclude Include="src\Game\Player\FPSController.h" />
@@ -50,19 +57,28 @@
     <ClInclude Include="src\Platform\DxLib\DxDebugText.h" />
     <ClInclude Include="src\Platform\DxLib\DxInput.h" />
     <ClInclude Include="src\Platform\DxLib\DxModel.h" />
+    <ClInclude Include="src\Platform\DxLib\DxModelResource.h" />
+    <ClInclude Include="src\Platform\DxLib\DxRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Core\Application.cpp" />
     <ClCompile Include="src\Engine\Core\Time.cpp" />
     <ClCompile Include="src\Engine\Input\InputMap.cpp" />
+    <ClCompile Include="src\Engine\Math\Matrix4.cpp" />
+    <ClCompile Include="src\Engine\Math\Matrix4Test.cpp" />
     <ClCompile Include="src\Engine\Physics\Character\CharacterController.cpp" />
     <ClCompile Include="src\Engine\Physics\Collision\CollisionWorld.cpp" />
     <ClCompile Include="src\Engine\Physics\Collision\Intersection.cpp" />
     <ClCompile Include="src\Engine\Rendering\Camera.cpp" />
     <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp" />
     <ClCompile Include="src\Engine\Rendering\Model.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ModelInstance.cpp" />
     <ClCompile Include="src\Engine\Rendering\ModelLoader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ModelResourceAccess.cpp" />
     <ClCompile Include="src\Engine\Rendering\ModelTest.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Renderer.cpp" />
+    <ClCompile Include="src\Engine\Resources\ResourceSystem.cpp" />
+    <ClCompile Include="src\Engine\Resources\ResourceSystemTest.cpp" />
     <ClCompile Include="src\Engine\Scene\SceneManager.cpp" />
     <ClCompile Include="src\Game\Player\FPSController.cpp" />
     <ClCompile Include="src\Game\Scenes\TestScene.cpp" />
@@ -72,7 +88,9 @@
     <ClCompile Include="src\Platform\DxLib\DxDebugText.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxInput.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxModel.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxModelResource.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxModelTest.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxRenderer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

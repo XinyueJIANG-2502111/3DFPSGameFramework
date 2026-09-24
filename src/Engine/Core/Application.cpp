@@ -11,17 +11,22 @@
 
 // test
 void RunDxModelTests();
-void RunModelTests();
+//void RunModelTests();
+//void RunResourceSystemTests();
+void RunMatrix4Tests();
 
 Application::Application(
     IPlatform& platform,
     IInput& input,
     IDebugText& debugText,
-    ICameraBackend& cameraBackend)
+    ICameraBackend& cameraBackend,
+    IRendererBackend& rendererBackend)
     : m_platform(platform)
     , m_input(input)
     , m_debugText(debugText)
     , m_cameraBackend(cameraBackend)
+    , m_rendererBackend(rendererBackend)
+    , m_resourceSystem(rendererBackend)
 {
 }
 
@@ -39,7 +44,9 @@ int Application::Run()
 
     // test
     //RunDxModelTests();
-    RunModelTests();
+    //RunModelTests();
+    //RunResourceSystemTests();
+    //RunMatrix4Tests();
 
 
     Time::Initialize();
@@ -86,7 +93,9 @@ bool Application::Initialize()
         std::make_unique<TestScene>(
             m_input,
             m_debugText,
-            m_cameraBackend));
+            m_cameraBackend, 
+            m_resourceSystem, 
+            m_rendererBackend));
 
 
     m_isInitialized = true;
@@ -110,6 +119,8 @@ void Application::Shutdown()
     //     将来的に Scene が描画・音声などのプラットフォーム依存リソースを
     //     解放する可能性があるため、この順序を保証する。
     m_sceneManager.Shutdown();
+
+    m_resourceSystem.Clear();
 
     m_platform.Shutdown();
 

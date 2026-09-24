@@ -5,10 +5,15 @@
 #include "Engine/Physics/Collision/Intersection.h"
 #include "Engine/Rendering/ICameraBackend.h"
 
+#include "Engine/Resources/ResourceSystem.h"
+
+#include "Engine/Rendering/Model.h"
+
 #include <DxLib.h>
 
 #include <format>
 #include <string>
+#include <cassert>
 
 namespace
 {
@@ -88,7 +93,9 @@ namespace
 TestScene::TestScene(
     IInput& input,
     IDebugText& debugText,
-    ICameraBackend& cameraBackend)
+    ICameraBackend& cameraBackend,
+    ResourceSystem& resourceSystem,
+    IRendererBackend& rendererBackend)
     : m_input(input)
     , m_debugText(debugText)
     , m_cameraBackend(cameraBackend)
@@ -96,6 +103,8 @@ TestScene::TestScene(
     , m_fpsController(m_inputMap)
     , m_cameraController(input)
     , m_characterController(m_collisionWorld)
+    , m_resourceSystem(resourceSystem)
+    , m_renderer(rendererBackend)
 {
 }
 
@@ -125,6 +134,47 @@ void TestScene::OnEnter()
     m_inputMap.Bind(
         InputAction::MoveRight,
         KeyCode::D);
+
+    // ------------------------------------------------------------
+    // Test Model
+    // ------------------------------------------------------------
+    m_testModel =
+        m_resourceSystem.LoadModel(
+            "Assets/Models/Bicycle.mv1");
+
+    assert(m_testModel != nullptr);
+    assert(m_testModel->IsValid());
+
+    m_testModelInstance.SetModel(
+        m_testModel);
+
+    auto& transform =
+        m_testModelInstance.GetTransform();
+
+    constexpr float Pi =
+        3.14159265358979323846f;
+
+    transform.position =
+        Vector3{
+            0.0f,
+            0.0f,
+            5.0f
+    };
+
+    transform.rotation =
+        Quaternion{};  // Identity rotation
+
+    transform.rotation =
+        Quaternion::FromAxisAngle(
+            Vector3{ 0.0f, 1.0f, 0.0f },
+            Pi * 0.5f);
+
+    transform.scale =
+        Vector3{
+            0.02f,
+            0.02f,
+            0.02f
+    };
 
 
     // ------------------------------------------------------------
@@ -174,47 +224,23 @@ void TestScene::OnEnter()
     // ------------------------------------------------------------
     // Test World AABB
     // ------------------------------------------------------------
-    // EN: Create a fixed world collider used as a temporary obstacle.
-    //
-    // JP: 一時的な障害物として使用する
-    //     固定 World Collider を作成する。
-    /*m_testWorldCollider.SetBounds(
-        AABB{
-            Vector3{
-                -1.0f,
-                 0.0f,
-                 1.0f
-            },
-            Vector3{
-                 1.0f,
-                 2.0f,
-                 3.0f
-            }
-        });*/
-
-    // EN: Both colliders participate in CollisionWorld queries.
-    //
-    // JP: 両方の Collider を CollisionWorld の
-    //     Query 対象として登録する。
-    /*m_collisionWorld.Register(
-        m_playerCollider);
-
-    m_collisionWorld.Register(
-        m_testWorldCollider);*/
-
-    m_testWorldCollider.SetBounds(
-        AABB{
-            Vector3{
-                -4.0f,
-                 0.0f,
-                 1.0f
-            },
-            Vector3{
-                 1.0f,
-                 2.0f,
-                 2.0f
-            }
-        });
+	// EN: Create a fixed world collider used as a temporary obstacle.
+	//
+	// JP: 一時的な障害物として使用する
+	//     固定 World Collider を作成する。
+	m_testWorldCollider.SetBounds(
+		AABB{
+			Vector3{
+				-4.0f,
+				 0.0f,
+				 1.0f
+			},
+			Vector3{
+				 1.0f,
+				 2.0f,
+				 2.0f
+			}
+		});
 
     m_testWorldCollider2.SetBounds(
         AABB{
@@ -230,22 +256,10 @@ void TestScene::OnEnter()
             }
         });
 
-    //m_isColliding = false;
-
-    /*m_testWorldCollider2.SetBounds(
-        AABB{
-            Vector3{
-                3.0f,
-                0.0f,
-                -2.0f
-            },
-            Vector3{
-                5.0f,
-                2.0f,
-                0.0f
-            }
-        });*/
-
+    // EN: Both colliders participate in CollisionWorld queries.
+    //
+    // JP: 両方の Collider を CollisionWorld の
+    //     Query 対象として登録する。
     m_collisionWorld.Register(
         m_playerCollider);
 
@@ -265,6 +279,14 @@ void TestScene::OnExit()
     //     外部 Resource は存在しない。
 
     m_collisionWorld.Clear();
+
+    // EN: Releases scene-owned resource references before the
+    //     rendering platform is shut down.
+    //
+    // JP: Rendering Platform が終了する前に、
+    //     Scene が保持する Resource Reference を解放する。
+    m_testModelInstance.SetModel(nullptr);
+    m_testModel.reset();
 }
 
 void TestScene::Update(float deltaTime)
@@ -393,6 +415,11 @@ void TestScene::Render()
     // JP: 3D 描画命令を実行する前に、Engine の Camera 情報を
     //     DxLib の有効な Camera へ適用する。
     m_cameraBackend.Apply(m_camera);
+
+
+    // test model
+    m_renderer.Draw(
+        m_testModelInstance);
 
 
     // ------------------------------------------------------------
@@ -555,367 +582,3 @@ void TestScene::Render()
         120,
         penetrationText.c_str());
 }
-
-//#include "Game/Scenes/TestScene.h"
-//
-//#include "Engine/Debug/IDebugText.h"
-//#include "Engine/Input/IInput.h"
-//
-//#include <format>
-//#include <string>
-//
-//#include "Engine/Rendering/ICameraBackend.h"
-//
-//// !!!!JUST FOR TEST!!!!
-//#include <DxLib.h>
-//
-//TestScene::TestScene(
-//    IInput& input,
-//    IDebugText& debugText,
-//    ICameraBackend& cameraBackend)
-//    : m_input(input)
-//    , m_debugText(debugText)
-//    , m_cameraBackend(cameraBackend)
-//    , m_inputMap(input)
-//    , m_fpsController(m_inputMap)
-//    , m_cameraController(input)
-//{
-//}
-//
-//void TestScene::OnEnter()
-//{
-//    m_deltaTime = 0.0f;
-//
-//    // EN: Player position represents the character's ground-level
-//    //     reference point rather than the eye position.
-//    //
-//    // JP: Player の Position は目の位置ではなく、
-//    //     キャラクターの地面基準位置を表す。
-//    m_playerTransform.position =
-//        Vector3{ 0.0f, 0.0f, -5.0f };
-//
-//    m_playerTransform.rotation =
-//        Quaternion{};
-//
-//    m_playerTransform.scale =
-//        Vector3{ 1.0f };
-//
-//    // EN: Camera orientation starts at the engine identity orientation,
-//    //     which faces the +Z forward direction.
-//    //
-//    // JP: Camera の初期姿勢には Engine の単位姿勢を使用し、
-//    //     +Z の Forward 方向を向かせる。
-//    m_camera.GetTransform().rotation =
-//        Quaternion{};
-//
-//    m_inputMap.Bind(
-//        InputAction::MoveForward,
-//        KeyCode::W);
-//
-//    m_inputMap.Bind(
-//        InputAction::MoveBackward,
-//        KeyCode::S);
-//
-//    m_inputMap.Bind(
-//        InputAction::MoveLeft,
-//        KeyCode::A);
-//
-//    m_inputMap.Bind(
-//        InputAction::MoveRight,
-//        KeyCode::D);
-//
-//    // EN: Fixed test obstacle placed in front of the player's
-//    //     initial position.
-//    //
-//    // JP: Player の初期位置より前方に配置する
-//    //     固定テスト障害物。
-//    m_testWorldBounds = AABB{
-//        Vector3{ -1.0f, 0.0f, 1.0f },
-//        Vector3{  1.0f, 2.0f, 3.0f }
-//    };
-//}
-//
-//void TestScene::OnExit()
-//{
-//}
-//
-//void TestScene::Update(float deltaTime)
-//{
-//    // EN: Store the frame delta for diagnostic rendering. The scene does
-//    //     not calculate timing itself; Application remains responsible
-//    //     for producing frame timing information.
-//    //
-//    // JP: デバッグ表示用としてフレームの deltaTime を保存する。
-//    //     Scene 自身では時間を計測せず、フレーム時間の生成責任は
-//    //     Application 側に維持する。
-//    m_deltaTime = deltaTime;
-//
-//    // EN: Camera input is processed during scene update so the new
-//    //     orientation is available before the current frame is rendered.
-//    //
-//    // JP: 現在フレームの描画前に新しい Camera 姿勢を反映できるよう、
-//    //     Scene の Update 中に Camera 入力を処理する。
-//    m_cameraController.Update(
-//        m_camera,
-//        deltaTime);
-//
-//    m_fpsController.Update(
-//        m_playerTransform,
-//        m_camera,
-//        deltaTime);
-//
-//    // EN: Camera position follows the player's ground reference position
-//    //     with a fixed eye-height offset.
-//    //
-//    // JP: Camera の位置は Player の地面基準位置に、
-//    //     固定の目線高さを加えた位置へ追従する。
-//    constexpr Vector3 eyeOffset{
-//        0.0f,
-//        1.7f,
-//        0.0f
-//    };
-//
-//    m_camera.GetTransform().position =
-//        m_playerTransform.position +
-//        eyeOffset;
-//}
-//
-//void TestScene::Render()
-//{
-//    m_cameraBackend.Apply(m_camera);
-//
-//    constexpr int gridHalfSize = 5;
-//
-//    const unsigned int gridColor =
-//        GetColor(80, 80, 80);
-//
-//    for (int i = -gridHalfSize; i <= gridHalfSize; ++i)
-//    {
-//        const float offset =
-//            static_cast<float>(i);
-//
-//        // EN: Lines parallel to the Z axis.
-//        // JP: Z 軸と平行なグリッド線。
-//        DrawLine3D(
-//            VGet(
-//                offset,
-//                0.0f,
-//                -static_cast<float>(gridHalfSize)),
-//            VGet(
-//                offset,
-//                0.0f,
-//                static_cast<float>(gridHalfSize)),
-//            gridColor);
-//
-//        // EN: Lines parallel to the X axis.
-//        // JP: X 軸と平行なグリッド線。
-//        DrawLine3D(
-//            VGet(
-//                -static_cast<float>(gridHalfSize),
-//                0.0f,
-//                offset),
-//            VGet(
-//                static_cast<float>(gridHalfSize),
-//                0.0f,
-//                offset),
-//            gridColor);
-//    }
-//
-//    DrawSphere3D(
-//        VGet(0.0f, 1.0f, 2.0f),
-//        0.5f,
-//        16,
-//        GetColor(255, 255, 255),
-//        GetColor(255, 255, 255),
-//        FALSE);
-//
-//    // EN: Temporary DxLib debug geometry used only to verify the
-//    //     camera and world coordinate conventions.
-//    //
-//    // JP: Camera とワールド座標規約を検証するためだけに使用する
-//    //     一時的な DxLib デバッグジオメトリ。
-//    DrawLine3D(
-//        VGet(0.0f, 0.0f, 0.0f),
-//        VGet(2.0f, 0.0f, 0.0f),
-//        GetColor(255, 0, 0));
-//
-//    DrawLine3D(
-//        VGet(0.0f, 0.0f, 0.0f),
-//        VGet(0.0f, 2.0f, 0.0f),
-//        GetColor(0, 255, 0));
-//
-//    DrawLine3D(
-//        VGet(0.0f, 0.0f, 0.0f),
-//        VGet(0.0f, 0.0f, 2.0f),
-//        GetColor(0, 128, 255));
-//
-//
-//
-//    //------------------------------------------------------------------------------------------------------------------------------
-//    //int debugY = 20;
-//
-//    //constexpr int debugX = 20;
-//    //constexpr int lineHeight = 20;
-//
-//    //// ------------------------------------------------------------
-//    //// Frame diagnostics
-//    //// フレーム診断情報
-//    //// ------------------------------------------------------------
-//
-//    //const float fps =
-//    //    m_deltaTime > 0.0f
-//    //    ? 1.0f / m_deltaTime
-//    //    : 0.0f;
-//
-//    //const std::string fpsText =
-//    //    std::format(
-//    //        "FPS: {:.1f}",
-//    //        fps);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    fpsText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //const std::string deltaTimeText =
-//    //    std::format(
-//    //        "DeltaTime: {:.6f}",
-//    //        m_deltaTime);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    deltaTimeText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //// ------------------------------------------------------------
-//    //// Input diagnostics
-//    //// 入力診断情報
-//    //// ------------------------------------------------------------
-//
-//    //const MouseDelta mouseDelta =
-//    //    m_input.GetMouseDelta();
-//
-//    //const std::string mouseText =
-//    //    std::format(
-//    //        "MouseDelta: ({:.1f}, {:.1f})",
-//    //        mouseDelta.x,
-//    //        mouseDelta.y);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    mouseText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //// ------------------------------------------------------------
-//    //// Camera transform diagnostics
-//    //// Camera Transform 診断情報
-//    //// ------------------------------------------------------------
-//
-//    //const Transform& cameraTransform =
-//    //    m_camera.GetTransform();
-//
-//    //const std::string positionText =
-//    //    std::format(
-//    //        "Camera Position: ({:.3f}, {:.3f}, {:.3f})",
-//    //        cameraTransform.position.x,
-//    //        cameraTransform.position.y,
-//    //        cameraTransform.position.z);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    positionText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //// EN: Camera directions are derived from its quaternion rotation.
-//    ////     They are not stored as separate mutable state.
-//    ////
-//    //// JP: Camera の各方向ベクトルは Quaternion の Rotation から計算する。
-//    ////     個別の変更可能な状態としては保持しない。
-//    //const Vector3 forward =
-//    //    m_camera.GetForward();
-//
-//    //const Vector3 right =
-//    //    m_camera.GetRight();
-//
-//    //const Vector3 up =
-//    //    m_camera.GetUp();
-//
-//
-//    //const std::string forwardText =
-//    //    std::format(
-//    //        "Camera Forward: ({:.3f}, {:.3f}, {:.3f})",
-//    //        forward.x,
-//    //        forward.y,
-//    //        forward.z);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    forwardText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //const std::string rightText =
-//    //    std::format(
-//    //        "Camera Right: ({:.3f}, {:.3f}, {:.3f})",
-//    //        right.x,
-//    //        right.y,
-//    //        right.z);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    rightText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //const std::string upText =
-//    //    std::format(
-//    //        "Camera Up: ({:.3f}, {:.3f}, {:.3f})",
-//    //        up.x,
-//    //        up.y,
-//    //        up.z);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    upText.c_str());
-//
-//    //debugY += lineHeight;
-//
-//
-//    //// EN: Target is derived from position + forward.
-//    ////     It is calculated only for diagnostics and is not stored
-//    ////     as part of Camera state.
-//    ////
-//    //// JP: Target は Position + Forward から導出する。
-//    ////     診断目的でのみ計算し、Camera の状態としては保持しない。
-//    //const Vector3 target =
-//    //    cameraTransform.position + forward;
-//
-//    //const std::string targetText =
-//    //    std::format(
-//    //        "Camera Target: ({:.3f}, {:.3f}, {:.3f})",
-//    //        target.x,
-//    //        target.y,
-//    //        target.z);
-//
-//    //m_debugText.Draw(
-//    //    debugX,
-//    //    debugY,
-//    //    targetText.c_str());
-//}

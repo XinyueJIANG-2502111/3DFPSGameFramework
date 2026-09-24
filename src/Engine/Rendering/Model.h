@@ -1,6 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <utility>
+
+// forward declaration
+class IModelResource;
+class ModelResourceAccess;
 
 class Model
 {
@@ -18,17 +23,14 @@ public:
 private:
     class Impl;
 
-    // EN: Creates a Model and its hidden backend implementation.
-    //     Backend-specific details remain inside Model.cpp.
-    //
-    // JP: Model と非公開の Backend Implementation を生成する。
-    //     Backend 固有の詳細は Model.cpp 内部に隠蔽する。
-    static std::unique_ptr<Model> Load(
-        const char* filePath);
+    static std::unique_ptr<Model> Create(
+        std::unique_ptr<IModelResource> resource);
 
     explicit Model(std::unique_ptr<Impl> impl);
 
+private:
     std::unique_ptr<Impl> m_impl;
 
     friend class ModelLoader;
+    friend class ModelResourceAccess;
 };

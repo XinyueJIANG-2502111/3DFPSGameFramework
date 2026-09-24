@@ -1,20 +1,10 @@
 #include "Engine/Rendering/Model.h"
+#include "Engine/Rendering/ModelImpl.h"
 
-#include "Platform/DxLib/DxModel.h"
+#include "Engine/Rendering/IModelResource.h"
 
 #include <memory>
 #include <utility>
-
-class Model::Impl
-{
-public:
-    explicit Impl(DxModel&& dxModel)
-        : model(std::move(dxModel))
-    {
-    }
-
-    DxModel model;
-};
 
 Model::Model(std::unique_ptr<Impl> impl)
     : m_impl(std::move(impl))
@@ -29,23 +19,22 @@ Model& Model::operator=(Model&& other) noexcept = default;
 
 bool Model::IsValid() const
 {
-    return m_impl != nullptr &&
-        m_impl->model.IsValid();
+    return
+        (m_impl != nullptr) &&
+        (m_impl->resource != nullptr);
 }
 
-std::unique_ptr<Model> Model::Load(
-    const char* filePath)
+std::unique_ptr<Model> Model::Create(
+    std::unique_ptr<IModelResource> resource)
 {
-    DxModel dxModel(filePath);
-
-    if (!dxModel.IsValid())
+    if (!resource)
     {
         return nullptr;
     }
 
     auto impl =
         std::make_unique<Impl>(
-            std::move(dxModel));
+            std::move(resource));
 
     return std::unique_ptr<Model>(
         new Model(std::move(impl)));

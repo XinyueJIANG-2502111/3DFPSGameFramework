@@ -2,6 +2,9 @@
 
 #include "Engine/Scene/IScene.h"
 
+#include "Engine/Rendering/ModelInstance.h"
+#include "Engine/Rendering/Renderer.h"
+
 #include "Engine/Rendering/Camera.h"
 #include "Engine/Rendering/FPSCameraController.h"
 
@@ -18,14 +21,26 @@
 
 #include "Engine/Physics/Character/CharacterController.h"
 
+#include <memory>
+
+class Model;
+
 class IInput;
 class IDebugText;
 class ICameraBackend;
+class IRendererBackend;
+
+class ResourceSystem;
 
 class TestScene final : public IScene
 {
 public:
-    explicit TestScene(IInput& input, IDebugText& debugText, ICameraBackend& cameraBackend);
+    explicit TestScene(
+        IInput& input,
+        IDebugText& debugText,
+        ICameraBackend& cameraBackend,
+        ResourceSystem& resourceSystem,
+        IRendererBackend& rendererBackend);
     //~TestScene() override = default;
 
     void OnEnter() override;
@@ -72,4 +87,11 @@ private:
     bool m_isColliding = false;
 
     CollisionHit m_collisionHit{};
+
+private:
+    ResourceSystem& m_resourceSystem;
+    std::shared_ptr<Model> m_testModel;
+
+    Renderer m_renderer;
+    ModelInstance m_testModelInstance;
 };

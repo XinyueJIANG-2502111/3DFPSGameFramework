@@ -1,0 +1,24 @@
+#pragma once
+
+#include "Engine/Rendering/IModelResource.h"
+#include "Platform/DxLib/DxModel.h"
+
+class DxModelResource final : public IModelResource
+{
+public:
+    explicit DxModelResource(
+        const char* filePath);
+
+    bool IsValid() const;
+
+    // Temporary backend access.
+    // This will only be used inside the DxLib rendering layer.
+    DxModel& GetModel();
+    const DxModel& GetModel() const;
+
+private:
+    // EN: Owns the DxLib-specific native model resource through RAII.
+    //
+    // JP: RAII Çí ÇµÇƒ DxLib å≈óLÇÃ Native Model Resource ÇèäóLÇ∑ÇÈÅB
+    DxModel m_model;
+};
