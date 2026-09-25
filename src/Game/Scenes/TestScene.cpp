@@ -174,7 +174,7 @@ void TestScene::OnEnter()
             0.02f,
             0.02f,
             0.02f
-    };
+        };
 
 
     // ------------------------------------------------------------
@@ -191,7 +191,7 @@ void TestScene::OnEnter()
             0.0f,
             0.0f,
             -5.0f
-    };
+        };
 
     m_playerTransform.rotation =
         Quaternion{};
@@ -228,7 +228,7 @@ void TestScene::OnEnter()
 	//
 	// JP: 一時的な障害物として使用する
 	//     固定 World Collider を作成する。
-	m_testWorldCollider.SetBounds(
+	/*m_testWorldCollider.SetBounds(
 		AABB{
 			Vector3{
 				-4.0f,
@@ -254,7 +254,7 @@ void TestScene::OnEnter()
                  2.0f,
                  6.0f
             }
-        });
+        });*/
 
     // EN: Both colliders participate in CollisionWorld queries.
     //
@@ -262,23 +262,96 @@ void TestScene::OnEnter()
     //     Query 対象として登録する。
     m_collisionWorld.Register(
         m_playerCollider);
-
-    m_collisionWorld.Register(
+    /*m_collisionWorld.Register(
         m_testWorldCollider);
 
     m_collisionWorld.Register(
-        m_testWorldCollider2);
+        m_testWorldCollider2);*/
+
+
+    // ------------------------------------------------------------
+    // fog
+    // ------------------------------------------------------------
+    m_fog.enabled = true;
+
+    m_fog.color =
+        Vector3{
+            0.25f,
+            0.28f,
+            0.32f
+    };
+
+    m_fog.startDistance = 1.0f;
+    m_fog.endDistance = 8.0f;
+
+    m_renderer.SetFog(m_fog);
+
+    m_renderer.SetClearColor(
+        m_clearColor);
+
+    // ------------------------------------------------------------
+    // ambient light
+    // ------------------------------------------------------------
+    m_ambientLight.enabled = true;
+
+    m_ambientLight.color =
+        Vector3{
+            0.04f,
+            0.045f,
+            0.055f
+    };
+
+    m_ambientLight.intensity = 1.0f;
+
+    m_renderer.SetAmbientLight(
+        m_ambientLight);
+
+    // ------------------------------------------------------------
+    // test spot light
+    // ------------------------------------------------------------
+    m_flashlight.enabled = true;
+
+    m_flashlight.position =
+        Vector3{
+            0.0f,
+            2.0f,
+            0.0f
+    };
+
+    m_flashlight.direction =
+        Vector3{
+            0.0f,
+            0.0f,
+            1.0f
+    };
+
+    m_flashlight.color =
+        Vector3{
+            1.0f,
+            0.95f,
+            0.85f
+    };
+
+    m_flashlight.intensity = 1.0f;
+    m_flashlight.range = 15.0f;
+
+    m_flashlight.innerAngle = 0.30f;
+    m_flashlight.outerAngle = 0.50f;
+
+    m_renderer.SetSpotLight(
+        m_flashlight);
 }
 
 void TestScene::OnExit()
 {
-    // EN: TestScene currently owns no external resource that requires
-    //     explicit release.
-    //
-    // JP: 現段階の TestScene には明示的な解放が必要な
-    //     外部 Resource は存在しない。
-
     m_collisionWorld.Clear();
+
+    m_renderer.SetClearColor(
+        Vector3{
+            0.0f,
+            0.0f,
+            0.0f
+        });
 
     // EN: Releases scene-owned resource references before the
     //     rendering platform is shut down.
@@ -287,6 +360,16 @@ void TestScene::OnExit()
     //     Scene が保持する Resource Reference を解放する。
     m_testModelInstance.SetModel(nullptr);
     m_testModel.reset();
+
+    m_flashlight.enabled = false;
+
+    m_renderer.SetSpotLight(
+        m_flashlight);
+
+    FogSettings disabledFog;
+    disabledFog.enabled = false;
+
+    m_renderer.SetFog(disabledFog);
 }
 
 void TestScene::Update(float deltaTime)
@@ -416,12 +499,6 @@ void TestScene::Render()
     //     DxLib の有効な Camera へ適用する。
     m_cameraBackend.Apply(m_camera);
 
-
-    // test model
-    m_renderer.Draw(
-        m_testModelInstance);
-
-
     // ------------------------------------------------------------
     // Temporary World Grid
     // ------------------------------------------------------------
@@ -458,6 +535,10 @@ void TestScene::Render()
             gridColor);
     }
 
+
+    // test model
+    m_renderer.Draw(
+        m_testModelInstance);
 
     // ------------------------------------------------------------
     // World Axes

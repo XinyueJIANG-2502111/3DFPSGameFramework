@@ -21,6 +21,11 @@
 
 #include "Engine/Physics/Character/CharacterController.h"
 
+#include "Engine/Rendering/FogSettings.h"
+#include "Engine/Rendering/Lighting/SpotLight.h"
+#include "Engine/Rendering/Lighting/AmbientLight.h"
+
+#include "Engine/Math/Vector3.h"
 #include <memory>
 
 class Model;
@@ -94,4 +99,15 @@ private:
 
     Renderer m_renderer;
     ModelInstance m_testModelInstance;
+
+private:
+    FogSettings m_fog;
+    SpotLight m_flashlight;
+    AmbientLight m_ambientLight;
+
+    Vector3 m_clearColor{
+    0.25f,
+    0.28f,
+    0.32f
+    };
 };

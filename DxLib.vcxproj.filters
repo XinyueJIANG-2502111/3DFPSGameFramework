@@ -63,6 +63,18 @@
     <Filter Include="02-Engine\0-Test">
       <UniqueIdentifier>{bfcbd113-932a-4782-8f77-2faa36048bf0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02-Engine\4-Rendering\Lighting">
+      <UniqueIdentifier>{d7c24920-e893-4a84-b187-d025828ce6bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\4-Rendering\Model">
+      <UniqueIdentifier>{11276cc6-c835-454a-8494-a51771735970}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\4-Rendering\Camera">
+      <UniqueIdentifier>{ed72ea07-19d8-4aa9-8868-d36c84a412cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02-Engine\4-Rendering\Fog">
+      <UniqueIdentifier>{73728564-a08d-4e33-8f1c-8f44ffee143c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Core\Application.h">
@@ -113,17 +125,8 @@
     <ClInclude Include="src\Engine\Math\Transform.h">
       <Filter>02-Engine\98-Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\Camera.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\ICameraBackend.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Platform\DxLib\DxCamera.h">
       <Filter>01-Platform\A-DxLib</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\FPSCameraController.h">
-      <Filter>02-Engine\4-Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Game\Player\FPSController.h">
       <Filter>3-Game%28Entities%29\B-Player</Filter>
@@ -152,17 +155,8 @@
     <ClInclude Include="src\Platform\DxLib\DxModel.h">
       <Filter>01-Platform\A-DxLib</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\Model.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\ModelLoader.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Engine\Resources\ResourceSystem.h">
       <Filter>02-Engine\5-Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\ModelInstance.h">
-      <Filter>02-Engine\4-Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\Renderer.h">
       <Filter>02-Engine\4-Rendering</Filter>
@@ -170,20 +164,50 @@
     <ClInclude Include="src\Engine\Math\Matrix4.h">
       <Filter>02-Engine\98-Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\IModelResource.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Platform\DxLib\DxModelResource.h">
       <Filter>01-Platform\A-DxLib</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\ModelResourceAccess.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\ModelImpl.h">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="src\Platform\DxLib\DxRenderer.h">
       <Filter>01-Platform\A-DxLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Lighting\PointLight.h">
+      <Filter>02-Engine\4-Rendering\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Lighting\SpotLight.h">
+      <Filter>02-Engine\4-Rendering\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\IModelResource.h">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Model.h">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ModelImpl.h">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ModelInstance.h">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ModelLoader.h">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ModelResourceAccess.h">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Camera.h">
+      <Filter>02-Engine\4-Rendering\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\FPSCameraController.h">
+      <Filter>02-Engine\4-Rendering\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\ICameraBackend.h">
+      <Filter>02-Engine\4-Rendering\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\FogSettings.h">
+      <Filter>02-Engine\4-Rendering\Fog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\Lighting\AmbientLight.h">
+      <Filter>02-Engine\4-Rendering\Lighting</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -211,14 +235,8 @@
     <ClCompile Include="src\Platform\DxLib\DxDebugText.cpp">
       <Filter>01-Platform\A-DxLib</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\Camera.cpp">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="src\Platform\DxLib\DxCamera.cpp">
       <Filter>01-Platform\A-DxLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp">
-      <Filter>02-Engine\4-Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Game\Player\FPSController.cpp">
       <Filter>3-Game%28Entities%29\B-Player</Filter>
@@ -241,17 +259,8 @@
     <ClCompile Include="src\Platform\DxLib\DxModelTest.cpp">
       <Filter>01-Platform\A-DxLib</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\Model.cpp">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\ModelLoader.cpp">
-      <Filter>02-Engine\4-Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\Resources\ResourceSystem.cpp">
       <Filter>02-Engine\5-Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\ModelInstance.cpp">
-      <Filter>02-Engine\4-Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\Renderer.cpp">
       <Filter>02-Engine\4-Rendering</Filter>
@@ -261,9 +270,6 @@
     </ClCompile>
     <ClCompile Include="src\Platform\DxLib\DxModelResource.cpp">
       <Filter>01-Platform\A-DxLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\ModelResourceAccess.cpp">
-      <Filter>02-Engine\4-Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\DxLib\DxRenderer.cpp">
       <Filter>01-Platform\A-DxLib</Filter>
@@ -276,6 +282,27 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Math\Matrix4Test.cpp">
       <Filter>02-Engine\0-Test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\Model.cpp">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\ModelInstance.cpp">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\ModelLoader.cpp">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\ModelResourceAccess.cpp">
+      <Filter>02-Engine\4-Rendering\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\Camera.cpp">
+      <Filter>02-Engine\4-Rendering\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp">
+      <Filter>02-Engine\4-Rendering\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\FodSettings.cpp">
+      <Filter>02-Engine\4-Rendering\Fog</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

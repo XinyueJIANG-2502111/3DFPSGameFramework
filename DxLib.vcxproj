@@ -38,9 +38,13 @@
     <ClInclude Include="src\Engine\Physics\Collision\CollisionWorld.h" />
     <ClInclude Include="src\Engine\Physics\Collision\Intersection.h" />
     <ClInclude Include="src\Engine\Rendering\Camera.h" />
+    <ClInclude Include="src\Engine\Rendering\FogSettings.h" />
     <ClInclude Include="src\Engine\Rendering\FPSCameraController.h" />
     <ClInclude Include="src\Engine\Rendering\ICameraBackend.h" />
     <ClInclude Include="src\Engine\Rendering\IModelResource.h" />
+    <ClInclude Include="src\Engine\Rendering\Lighting\AmbientLight.h" />
+    <ClInclude Include="src\Engine\Rendering\Lighting\PointLight.h" />
+    <ClInclude Include="src\Engine\Rendering\Lighting\SpotLight.h" />
     <ClInclude Include="src\Engine\Rendering\Model.h" />
     <ClInclude Include="src\Engine\Rendering\ModelImpl.h" />
     <ClInclude Include="src\Engine\Rendering\ModelInstance.h" />
@@ -70,6 +74,7 @@
     <ClCompile Include="src\Engine\Physics\Collision\CollisionWorld.cpp" />
     <ClCompile Include="src\Engine\Physics\Collision\Intersection.cpp" />
     <ClCompile Include="src\Engine\Rendering\Camera.cpp" />
+    <ClCompile Include="src\Engine\Rendering\FodSettings.cpp" />
     <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp" />
     <ClCompile Include="src\Engine\Rendering\Model.cpp" />
     <ClCompile Include="src\Engine\Rendering\ModelInstance.cpp" />
