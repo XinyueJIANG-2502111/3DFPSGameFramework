@@ -311,7 +311,7 @@ void TestScene::OnEnter()
     // ------------------------------------------------------------
     m_flashlight.enabled = true;
 
-    m_flashlight.position =
+    /*m_flashlight.position =
         Vector3{
             0.0f,
             2.0f,
@@ -323,7 +323,7 @@ void TestScene::OnEnter()
             0.0f,
             0.0f,
             1.0f
-    };
+    };*/
 
     m_flashlight.color =
         Vector3{
@@ -396,10 +396,10 @@ void TestScene::Update(float deltaTime)
     // ------------------------------------------------------------
 
     // EN: Convert FPS input into a desired world-space displacement.
-//     No collision response happens inside FPSController.
-//
-// JP: FPS 入力をワールド空間上の希望移動量へ変換する。
-//     FPSController 内では Collision Response を行わない。
+    //     No collision response happens inside FPSController.
+    //
+    // JP: FPS 入力をワールド空間上の希望移動量へ変換する。
+    //     FPSController 内では Collision Response を行わない。
     const Vector3 desiredMovement =
         m_fpsController.ComputeMovement(
             m_camera,
@@ -436,6 +436,31 @@ void TestScene::Update(float deltaTime)
     m_camera.GetTransform().position =
         m_playerTransform.position +
         eyeOffset;
+
+    // ------------------------------------------------------------
+    // spotlight update
+    // ------------------------------------------------------------
+    const Transform& cameraTransform =
+        m_camera.GetTransform();
+
+    m_flashlight.position =
+        cameraTransform.position;
+
+    const Vector3 localForward{
+        0.0f,
+        0.0f,
+        1.0f
+    };
+
+    // EN: Attach the flashlight direction to the FPS camera forward direction.
+    //
+    // JP: Flashlight の方向を FPS Camera の Forward 方向に追従させる。
+    m_flashlight.direction =
+        cameraTransform.rotation.Rotate(
+            localForward);
+
+    m_renderer.SetSpotLight(
+        m_flashlight);
 
 
     // ------------------------------------------------------------
