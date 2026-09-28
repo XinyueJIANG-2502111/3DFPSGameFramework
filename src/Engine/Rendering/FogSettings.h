@@ -27,4 +27,11 @@ struct FogSettings
     //
     // JP: Linear Fog が最大強度に達する Camera からの距離。
     float endDistance = 50.0f;
+
+    // EN: Controls the density of exponential fog.
+    //     Higher values make fog accumulate more quickly with distance.
+    //
+    // JP: Exponential Fog の Density を制御する。
+    //     値が大きいほど、距離に応じて Fog が速く濃くなる。
+    float density = 0.05f;
 };

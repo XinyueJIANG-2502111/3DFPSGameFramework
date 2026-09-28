@@ -1,9 +1,18 @@
 #pragma once
 
 #include "Engine/Rendering/Renderer.h"
+#include "Engine/Rendering/ShaderCameraData.h"
+
+#include "Engine/Rendering/Lighting/AmbientLight.h"
+#include "Engine/Rendering/Lighting/SpotLight.h"
+#include "Engine/Rendering/Lighting/ShaderLightingData.h"
+
+#include "Engine/Rendering/FogSettings.h"
+#include "Engine/Rendering/Fog/ShaderFogData.h"
 
 // forward declaration
 class ModelInstance;
+class IShaderResource;
 struct FogSettings;
 struct Vector3;
 struct PointLight;
@@ -35,6 +44,50 @@ public:
     void SetAmbientLight(
         const AmbientLight& light) override;
 
+    void SetCameraPosition(
+        const Vector3& position) override;
+
+    std::unique_ptr<IShaderResource> CreateShaderResource(
+        const char* vertexShaderPath,
+        const char* pixelShaderPath) override;
+
+public:
+    void Shutdown() override;
+
 private:
-    int m_spotLightHandle = -1;
+    int m_spotLightHandle = InvalidHandle;
+
+    AmbientLight m_ambientLight;
+    SpotLight m_spotLight;
+
+    ShaderLightingData BuildShaderLightingData() const;
+
+    void EnsureLightingConstantBuffer();
+    void UpdateLightingConstantBuffer();
+
+private:
+    FogSettings m_fogSettings;
+
+    int m_fogConstantBufferHandle =
+        InvalidHandle;
+
+    ShaderFogData BuildShaderFogData() const;
+
+    void EnsureFogConstantBuffer();
+    void UpdateFogConstantBuffer();
+
+private:
+    static constexpr int InvalidHandle = -1;
+
+    int m_lightingConstantBufferHandle =
+        InvalidHandle;
+
+private:
+    ShaderCameraData m_cameraData;
+
+    int m_cameraConstantBufferHandle =
+        InvalidHandle;
+
+    void EnsureCameraConstantBuffer();
+    void UpdateCameraConstantBuffer();
 };

@@ -39,11 +39,14 @@
     <ClInclude Include="src\Engine\Physics\Collision\Intersection.h" />
     <ClInclude Include="src\Engine\Rendering\Camera.h" />
     <ClInclude Include="src\Engine\Rendering\FogSettings.h" />
+    <ClInclude Include="src\Engine\Rendering\Fog\ShaderFogData.h" />
     <ClInclude Include="src\Engine\Rendering\FPSCameraController.h" />
     <ClInclude Include="src\Engine\Rendering\ICameraBackend.h" />
     <ClInclude Include="src\Engine\Rendering\IModelResource.h" />
+    <ClInclude Include="src\Engine\Rendering\IShaderResource.h" />
     <ClInclude Include="src\Engine\Rendering\Lighting\AmbientLight.h" />
     <ClInclude Include="src\Engine\Rendering\Lighting\PointLight.h" />
+    <ClInclude Include="src\Engine\Rendering\Lighting\ShaderLightingData.h" />
     <ClInclude Include="src\Engine\Rendering\Lighting\SpotLight.h" />
     <ClInclude Include="src\Engine\Rendering\Model.h" />
     <ClInclude Include="src\Engine\Rendering\ModelImpl.h" />
@@ -51,6 +54,11 @@
     <ClInclude Include="src\Engine\Rendering\ModelLoader.h" />
     <ClInclude Include="src\Engine\Rendering\ModelResourceAccess.h" />
     <ClInclude Include="src\Engine\Rendering\Renderer.h" />
+    <ClInclude Include="src\Engine\Rendering\Shader.h" />
+    <ClInclude Include="src\Engine\Rendering\ShaderCameraData.h" />
+    <ClInclude Include="src\Engine\Rendering\ShaderImpl.h" />
+    <ClInclude Include="src\Engine\Rendering\ShaderLoader.h" />
+    <ClInclude Include="src\Engine\Rendering\ShaderResourceAccess.h" />
     <ClInclude Include="src\Engine\Resources\ResourceSystem.h" />
     <ClInclude Include="src\Engine\Scene\IScene.h" />
     <ClInclude Include="src\Engine\Scene\SceneManager.h" />
@@ -63,6 +71,7 @@
     <ClInclude Include="src\Platform\DxLib\DxModel.h" />
     <ClInclude Include="src\Platform\DxLib\DxModelResource.h" />
     <ClInclude Include="src\Platform\DxLib\DxRenderer.h" />
+    <ClInclude Include="src\Platform\DxLib\DxShaderResource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Core\Application.cpp" />
@@ -74,7 +83,6 @@
     <ClCompile Include="src\Engine\Physics\Collision\CollisionWorld.cpp" />
     <ClCompile Include="src\Engine\Physics\Collision\Intersection.cpp" />
     <ClCompile Include="src\Engine\Rendering\Camera.cpp" />
-    <ClCompile Include="src\Engine\Rendering\FodSettings.cpp" />
     <ClCompile Include="src\Engine\Rendering\FPSCameraController.cpp" />
     <ClCompile Include="src\Engine\Rendering\Model.cpp" />
     <ClCompile Include="src\Engine\Rendering\ModelInstance.cpp" />
@@ -82,6 +90,9 @@
     <ClCompile Include="src\Engine\Rendering\ModelResourceAccess.cpp" />
     <ClCompile Include="src\Engine\Rendering\ModelTest.cpp" />
     <ClCompile Include="src\Engine\Rendering\Renderer.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Shader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ShaderLoader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ShaderResourceAccess.cpp" />
     <ClCompile Include="src\Engine\Resources\ResourceSystem.cpp" />
     <ClCompile Include="src\Engine\Resources\ResourceSystemTest.cpp" />
     <ClCompile Include="src\Engine\Scene\SceneManager.cpp" />
@@ -96,6 +107,7 @@
     <ClCompile Include="src\Platform\DxLib\DxModelResource.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxModelTest.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxRenderer.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxShaderResource.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

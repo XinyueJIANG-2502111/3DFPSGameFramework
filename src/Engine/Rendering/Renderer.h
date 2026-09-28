@@ -5,6 +5,7 @@
 // forward declaration
 class IModelResource;
 class ModelInstance;
+class IShaderResource;
 struct Vector3;
 struct FogSettings;
 struct AmbientLight;
@@ -36,6 +37,23 @@ public:
 
     virtual void SetAmbientLight(
         const AmbientLight& light) = 0;
+
+    // EN: Creates a backend-specific shader resource.
+    //
+    // JP: Backend 固有の Shader Resource を生成する。
+    virtual std::unique_ptr<IShaderResource> CreateShaderResource(
+        const char* vertexShaderPath,
+        const char* pixelShaderPath) = 0;
+
+    virtual void SetCameraPosition(
+        const Vector3& position) = 0;
+
+    // EN: Releases backend-owned rendering resources before
+    //     the graphics platform is shut down.
+    //
+    // JP: Graphics Platform が終了する前に、Backend が所有する
+    //     Rendering Resource を解放する。
+    virtual void Shutdown() = 0;
 };
 
 class Renderer
@@ -65,6 +83,9 @@ public:
 
     void SetAmbientLight(
         const AmbientLight& light);
+
+    void SetCameraPosition(
+        const Vector3& position);
 
 private:
     IRendererBackend& m_backend;

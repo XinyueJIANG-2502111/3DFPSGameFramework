@@ -8,6 +8,7 @@
 #include "Engine/Resources/ResourceSystem.h"
 
 #include "Engine/Rendering/Model.h"
+#include "Engine/Rendering/Shader.h"
 
 #include <DxLib.h>
 
@@ -110,6 +111,20 @@ TestScene::TestScene(
 
 void TestScene::OnEnter()
 {
+    // ------------------------------------------------------------
+    // shader test
+    // ------------------------------------------------------------
+    m_testShader =
+        m_resourceSystem.LoadShader(
+            "Assets/Shaders/Source/BasicModelVS.vso",
+            "Assets/Shaders/Source/BasicModelPS.pso");
+
+    assert(m_testShader != nullptr);
+    assert(m_testShader->IsValid());
+
+    m_testModelInstance.SetShader(
+        m_testShader);
+
     // ------------------------------------------------------------
     // Input Mapping
     // ------------------------------------------------------------
@@ -270,19 +285,22 @@ void TestScene::OnEnter()
 
 
     // ------------------------------------------------------------
-    // fog
+    // Fog
     // ------------------------------------------------------------
     m_fog.enabled = true;
 
     m_fog.color =
         Vector3{
             0.25f,
-            0.28f,
-            0.32f
+            0.25f,
+            0.25f
     };
 
-    m_fog.startDistance = 1.0f;
-    m_fog.endDistance = 8.0f;
+    m_fog.startDistance = 0.0f;
+
+    m_fog.density = 0.2f;
+
+    m_fog.endDistance = 25.0f;
 
     m_renderer.SetFog(m_fog);
 
@@ -370,6 +388,9 @@ void TestScene::OnExit()
     disabledFog.enabled = false;
 
     m_renderer.SetFog(disabledFog);
+
+    m_testModelInstance.SetShader(nullptr);
+    m_testShader.reset();
 }
 
 void TestScene::Update(float deltaTime)
@@ -442,6 +463,9 @@ void TestScene::Update(float deltaTime)
     // ------------------------------------------------------------
     const Transform& cameraTransform =
         m_camera.GetTransform();
+
+    m_renderer.SetCameraPosition(
+        cameraTransform.position);
 
     m_flashlight.position =
         cameraTransform.position;

@@ -26,7 +26,11 @@
 #include "Engine/Rendering/Lighting/AmbientLight.h"
 
 #include "Engine/Math/Vector3.h"
+
 #include <memory>
+
+// temp
+class Shader;
 
 class Model;
 
@@ -110,4 +114,7 @@ private:
     0.28f,
     0.32f
     };
+
+private:
+    std::shared_ptr<Shader> m_testShader;
 };

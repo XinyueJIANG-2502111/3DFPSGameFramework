@@ -122,6 +122,8 @@ void Application::Shutdown()
 
     m_resourceSystem.Clear();
 
+    m_rendererBackend.Shutdown();
+
     m_platform.Shutdown();
 
     m_isInitialized = false;

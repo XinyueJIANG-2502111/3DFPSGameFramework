@@ -5,8 +5,10 @@
 #include <unordered_map>
 
 #include "Engine/Rendering/ModelLoader.h"
+#include "Engine/Rendering/ShaderLoader.h"
 
 class Model;
+class Shader;
 class IRendererBackend;
 
 class ResourceSystem
@@ -43,12 +45,22 @@ public:
     //     Cache Reference ‚ğƒNƒŠƒA‚·‚éB
     void Clear();
 
+    std::shared_ptr<Shader> LoadShader(
+        const std::string& vertexShaderPath,
+        const std::string& pixelShaderPath);
+
 private:
     ModelLoader m_modelLoader;
 
     std::unordered_map<
         std::string,
         std::weak_ptr<Model>> m_modelCache;
+
+    ShaderLoader m_shaderLoader;
+
+    std::unordered_map<
+        std::string,
+        std::weak_ptr<Shader>> m_shaderCache;
 
     // EN: Converts an asset path into a stable cache key so that
     //     equivalent paths identify the same runtime resource.

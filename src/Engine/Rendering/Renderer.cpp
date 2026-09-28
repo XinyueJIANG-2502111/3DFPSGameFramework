@@ -86,3 +86,9 @@ void Renderer::SetAmbientLight(
 {
     m_backend.SetAmbientLight(light);
 }
+
+void Renderer::SetCameraPosition(
+    const Vector3& position)
+{
+    m_backend.SetCameraPosition(position);
+}

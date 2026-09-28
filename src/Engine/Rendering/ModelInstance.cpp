@@ -16,6 +16,17 @@ ModelInstance::GetModel() const
     return m_model;
 }
 
+void ModelInstance::SetShader(
+    std::shared_ptr<Shader> shader)
+{
+    m_shader = std::move(shader);
+}
+
+const std::shared_ptr<Shader>& ModelInstance::GetShader() const
+{
+    return m_shader;
+}
+
 Transform& ModelInstance::GetTransform()
 {
     return m_transform;

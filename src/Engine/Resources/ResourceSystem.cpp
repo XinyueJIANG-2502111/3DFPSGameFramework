@@ -1,6 +1,7 @@
 #include "Engine/Resources/ResourceSystem.h"
 
 #include "Engine/Rendering/Model.h"
+#include "Engine/Rendering/Shader.h"
 
 #include <filesystem>
 #include <memory>
@@ -9,6 +10,7 @@
 ResourceSystem::ResourceSystem(
     IRendererBackend& rendererBackend)
     : m_modelLoader(rendererBackend)
+    , m_shaderLoader(rendererBackend)
 {
 }
 
@@ -51,6 +53,56 @@ std::shared_ptr<Model> ResourceSystem::LoadModel(
     return resource;
 }
 
+std::shared_ptr<Shader> ResourceSystem::LoadShader(
+    const std::string& vertexShaderPath,
+    const std::string& pixelShaderPath)
+{
+    const std::string normalizedVertexPath =
+        NormalizePath(vertexShaderPath);
+
+    const std::string normalizedPixelPath =
+        NormalizePath(pixelShaderPath);
+
+    // EN: A shader resource is identified by both its vertex
+    //     and pixel shader paths.
+    //
+    // JP: Shader Resource ÇÕ Vertex Shader Ç∆ Pixel ShaderÅA
+    //     óºï˚ÇÃ Path ÇÃëgÇ›çáÇÌÇπÇ…ÇÊÇ¡ÇƒéØï Ç∑ÇÈÅB
+    const std::string key =
+        normalizedVertexPath +
+        "|" +
+        normalizedPixelPath;
+
+    const auto iterator =
+        m_shaderCache.find(key);
+
+    if (iterator != m_shaderCache.end())
+    {
+        if (std::shared_ptr<Shader> existing =
+            iterator->second.lock())
+        {
+            return existing;
+        }
+    }
+
+    std::unique_ptr<Shader> loaded =
+        m_shaderLoader.Load(
+            normalizedVertexPath.c_str(),
+            normalizedPixelPath.c_str());
+
+    if (!loaded)
+    {
+        return nullptr;
+    }
+
+    std::shared_ptr<Shader> resource =
+        std::move(loaded);
+
+    m_shaderCache[key] = resource;
+
+    return resource;
+}
+
 void ResourceSystem::RemoveExpired()
 {
     for (auto iterator = m_modelCache.begin();
@@ -66,11 +118,26 @@ void ResourceSystem::RemoveExpired()
             ++iterator;
         }
     }
+
+    for (auto iterator = m_shaderCache.begin();
+        iterator != m_shaderCache.end();)
+    {
+        if (iterator->second.expired())
+        {
+            iterator =
+                m_shaderCache.erase(iterator);
+        }
+        else
+        {
+            ++iterator;
+        }
+    }
 }
 
 void ResourceSystem::Clear()
 {
     m_modelCache.clear();
+    m_shaderCache.clear();
 }
 
 std::string ResourceSystem::NormalizePath(

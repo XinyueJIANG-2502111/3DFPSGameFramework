@@ -5,6 +5,7 @@
 #include <memory>
 
 class Model;
+class Shader;
 
 class ModelInstance
 {
@@ -18,10 +19,16 @@ public:
 
     const std::shared_ptr<Model>& GetModel() const;
 
+    void SetShader(
+        std::shared_ptr<Shader> shader);
+
+    const std::shared_ptr<Shader>& GetShader() const;
+
     Transform& GetTransform();
     const Transform& GetTransform() const;
 
 private:
     std::shared_ptr<Model> m_model;
+    std::shared_ptr<Shader> m_shader;
     Transform m_transform;
 };
