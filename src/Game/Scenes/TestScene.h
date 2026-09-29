@@ -25,6 +25,8 @@
 #include "Engine/Rendering/Lighting/SpotLight.h"
 #include "Engine/Rendering/Lighting/AmbientLight.h"
 
+#include "Engine/Rendering/Volumetric/VolumetricCone.h"
+
 #include "Engine/Math/Vector3.h"
 
 #include <memory>
@@ -40,6 +42,7 @@ class ICameraBackend;
 class IRendererBackend;
 
 class ResourceSystem;
+
 
 class TestScene final : public IScene
 {
@@ -117,4 +120,6 @@ private:
 
 private:
     std::shared_ptr<Shader> m_testShader;
+
+    VolumetricCone m_flashlightVolume;
 };

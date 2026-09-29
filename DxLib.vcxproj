@@ -59,6 +59,8 @@
     <ClInclude Include="src\Engine\Rendering\ShaderImpl.h" />
     <ClInclude Include="src\Engine\Rendering\ShaderLoader.h" />
     <ClInclude Include="src\Engine\Rendering\ShaderResourceAccess.h" />
+    <ClInclude Include="src\Engine\Rendering\Volumetric\ShaderVolumetricData.h" />
+    <ClInclude Include="src\Engine\Rendering\Volumetric\VolumetricCone.h" />
     <ClInclude Include="src\Engine\Resources\ResourceSystem.h" />
     <ClInclude Include="src\Engine\Scene\IScene.h" />
     <ClInclude Include="src\Engine\Scene\SceneManager.h" />

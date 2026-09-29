@@ -9,6 +9,8 @@
 
 #include "Engine/Rendering/Model.h"
 #include "Engine/Rendering/Shader.h"
+#include "Engine/Rendering/Volumetric/ShaderVolumetricData.h"
+
 
 #include <DxLib.h>
 
@@ -285,6 +287,18 @@ void TestScene::OnEnter()
 
 
     // ------------------------------------------------------------
+    // volumetric data
+    // ------------------------------------------------------------
+    ShaderVolumetricData volumetric{};
+
+    volumetric.enabled = 1.0f;
+    volumetric.intensity = 1.0f;
+    volumetric.scattering = 0.05f;
+
+    m_renderer.SetVolumetricSettings(
+        volumetric);
+
+    // ------------------------------------------------------------
     // Fog
     // ------------------------------------------------------------
     m_fog.enabled = true;
@@ -391,6 +405,12 @@ void TestScene::OnExit()
 
     m_testModelInstance.SetShader(nullptr);
     m_testShader.reset();
+
+    ShaderVolumetricData volumetric{};
+    volumetric.enabled = 0.0f;
+
+    m_renderer.SetVolumetricSettings(
+        volumetric);
 }
 
 void TestScene::Update(float deltaTime)
@@ -461,7 +481,7 @@ void TestScene::Update(float deltaTime)
     // ------------------------------------------------------------
     // spotlight update
     // ------------------------------------------------------------
-    const Transform& cameraTransform =
+    const Transform cameraTransform =
         m_camera.GetTransform();
 
     m_renderer.SetCameraPosition(
@@ -533,6 +553,61 @@ void TestScene::Update(float deltaTime)
         m_collisionWorld.ComputeCollision(
             m_playerCollider,
             m_collisionHit);
+
+    // ------------------------------------------------------------
+    // flashlight volume
+    // ------------------------------------------------------------
+    const Vector3 cameraForward =
+        Normalize(m_flashlight.direction);
+
+    const float nearPlane =
+        m_camera.GetNearPlane();
+
+    const float volumetricStartOffset =
+        nearPlane + 0.01f > 0.25f
+        ? nearPlane + 0.01f
+        : 0.25f;
+
+    // EN: This debug shell starts beyond the near plane to avoid the
+    //     eye-at-apex projection degeneracy, not to reverse the beam.
+    //     Shorten its length so its end stays at the flashlight range.
+    //
+    // JP: 視点と頂点の一致による投影の退化を避けるため、
+    //     デバッグ外殻の頂点を近クリップ面より前へ移す。方向は反転しない。
+    //     終点を懐中電灯の到達距離に保つため、移動分だけ長さを短くする。
+    m_flashlightVolume.position =
+        m_flashlight.position +
+        cameraForward * volumetricStartOffset;
+
+    m_flashlightVolume.direction =
+        cameraForward;
+
+    m_flashlightVolume.range =
+        m_flashlight.range - volumetricStartOffset;
+
+    m_flashlightVolume.outerAngle =
+        m_flashlight.outerAngle;
+
+    // DEBUG ONLY
+    /*m_flashlightVolume.position =
+        Vector3{
+            0.0f,
+            1.0f,
+            3.0f
+    };
+
+    m_flashlightVolume.direction =
+        Vector3{
+            1.0f,
+            0.0f,
+            0.0f
+    };
+
+    m_flashlightVolume.range =
+        5.0f;
+
+    m_flashlightVolume.outerAngle =
+        0.35f;*/
 }
 
 void TestScene::Render()
@@ -589,6 +664,10 @@ void TestScene::Render()
     m_renderer.Draw(
         m_testModelInstance);
 
+    // flashlight cone
+    m_renderer.DrawVolumetricCone(
+        m_flashlightVolume);
+
     // ------------------------------------------------------------
     // World Axes
     // ------------------------------------------------------------
@@ -643,7 +722,7 @@ void TestScene::Render()
     // Debug Text
     // ------------------------------------------------------------
 
-    const float fps =
+    /*const float fps =
         m_deltaTime > 0.0f
         ? 1.0f / m_deltaTime
         : 0.0f;
@@ -710,5 +789,6 @@ void TestScene::Render()
     m_debugText.Draw(
         20,
         120,
-        penetrationText.c_str());
+        penetrationText.c_str());*/
+
 }

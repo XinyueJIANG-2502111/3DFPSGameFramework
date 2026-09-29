@@ -92,3 +92,15 @@ void Renderer::SetCameraPosition(
 {
     m_backend.SetCameraPosition(position);
 }
+
+void Renderer::SetVolumetricSettings(
+    const ShaderVolumetricData& settings)
+{
+    m_backend.SetVolumetricSettings(settings);
+}
+
+void Renderer::DrawVolumetricCone(
+    const VolumetricCone& cone)
+{
+    m_backend.DrawVolumetricCone(cone);
+}

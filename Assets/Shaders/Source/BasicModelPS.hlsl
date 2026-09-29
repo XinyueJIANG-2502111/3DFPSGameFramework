@@ -85,6 +85,19 @@ cbuffer CameraBuffer : register(b6)
     ShaderCameraData g_Camera;
 };
 
+struct ShaderVolumetricData
+{
+    float Enabled;
+    float Intensity;
+    float Scattering;
+    float Padding;
+};
+
+cbuffer VolumetricBuffer : register(b7)
+{
+    ShaderVolumetricData g_Volumetric;
+};
+
 
 Texture2D g_DiffuseMapTexture
     : register(t0);

@@ -29,7 +29,7 @@ private:
     void Shutdown();
 
     void Update();
-    void Render();
+    void Render(); // TODO : const Ç…Ç∑ÇÈÅH
 
 private:
     IPlatform& m_platform;

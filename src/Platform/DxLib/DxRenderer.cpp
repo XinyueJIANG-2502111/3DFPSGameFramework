@@ -121,6 +121,7 @@ void DxRenderer::Draw(
             UpdateLightingConstantBuffer();
             UpdateFogConstantBuffer();
             UpdateCameraConstantBuffer();
+            UpdateVolumetricConstantBuffer();
         }
     }
 
@@ -586,6 +587,9 @@ void DxRenderer::Shutdown()
 
         m_cameraConstantBufferHandle =
             InvalidHandle;
+
+        m_volumetricConstantBufferHandle =
+            InvalidHandle;
     }
 }
 
@@ -643,4 +647,269 @@ void DxRenderer::UpdateCameraConstantBuffer()
         m_cameraConstantBufferHandle,
         DX_SHADERTYPE_PIXEL,
         6);
+}
+
+void DxRenderer::SetVolumetricSettings(
+    const ShaderVolumetricData& settings)
+{
+    m_volumetricData =
+        settings;
+}
+
+void DxRenderer::EnsureVolumetricConstantBuffer()
+{
+    if (m_volumetricConstantBufferHandle != InvalidHandle)
+    {
+        return;
+    }
+
+    m_volumetricConstantBufferHandle =
+        CreateShaderConstantBuffer(
+            sizeof(ShaderVolumetricData));
+}
+
+void DxRenderer::UpdateVolumetricConstantBuffer()
+{
+    EnsureVolumetricConstantBuffer();
+
+    if (m_volumetricConstantBufferHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    void* buffer =
+        GetBufferShaderConstantBuffer(
+            m_volumetricConstantBufferHandle);
+
+    if (buffer == nullptr)
+    {
+        return;
+    }
+
+    // EN: Upload the latest volumetric-scattering parameters
+    //     to the pixel shader constant buffer.
+    //
+    // JP: 最新の Volumetric Scattering Parameter を
+    //     Pixel Shader Constant Buffer に Upload する。
+    std::memcpy(
+        buffer,
+        &m_volumetricData,
+        sizeof(ShaderVolumetricData));
+
+    UpdateShaderConstantBuffer(
+        m_volumetricConstantBufferHandle);
+
+    SetShaderConstantBuffer(
+        m_volumetricConstantBufferHandle,
+        DX_SHADERTYPE_PIXEL,
+        7);
+}
+
+void DxRenderer::DrawVolumetricCone(
+    const VolumetricCone& cone)
+{
+    constexpr int SegmentCount = 20;
+    constexpr float TwoPi = 6.28318530718f;
+    constexpr float HalfPi = TwoPi * 0.25f;
+
+    // EN: Reject invalid geometry before changing any global draw state.
+    //     The angle is an axis-to-edge half-angle, not a full aperture.
+    //
+    // JP: 描画状態を変更する前に無効な形状を除外する。
+    //     角度は開口角全体ではなく、中心軸から外縁までの半角である。
+    const float directionLength =
+        std::hypot(cone.direction.x, cone.direction.y, cone.direction.z);
+
+    if (!std::isfinite(cone.position.x) ||
+        !std::isfinite(cone.position.y) ||
+        !std::isfinite(cone.position.z) ||
+        !std::isfinite(directionLength) || directionLength <= 0.000001f ||
+        !std::isfinite(cone.range) || cone.range <= 0.0f ||
+        !std::isfinite(cone.outerAngle) ||
+        cone.outerAngle <= 0.0f || cone.outerAngle >= HalfPi)
+    {
+        return;
+    }
+
+    const float radius =
+        std::tan(cone.outerAngle) *
+        cone.range;
+
+    if (!std::isfinite(radius) || radius <= 0.0f)
+    {
+        return;
+    }
+
+    // EN: Forward points from the apex toward the beam end in world space.
+    // JP: Forward はワールド空間で頂点から光束の終点へ向かう方向とする。
+    const VECTOR forward = VGet(
+        cone.direction.x / directionLength,
+        cone.direction.y / directionLength,
+        cone.direction.z / directionLength);
+
+    int previousBlendMode = DX_BLENDMODE_NOBLEND;
+    int previousBlendParam = 0;
+    GetDrawBlendMode(&previousBlendMode, &previousBlendParam);
+    const int previousCulling = GetUseBackCulling();
+
+    // EN: Keep both faces visible from inside or outside the debug shell.
+    //     Test against scene depth without writing transparent geometry.
+    //
+    // JP: デバッグ外殻の内側と外側の両方から見えるよう両面を描画する。
+    //     シーンの深度で遮蔽を判定するが、透明形状の深度は書き込まない。
+    SetUseBackCulling(DX_CULLING_NONE);
+    SetUseZBuffer3D(TRUE);
+    SetWriteZBuffer3D(FALSE);
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 160);
+
+    // EN: Select a temporary reference axis that is not
+    //     nearly parallel to the forward direction.
+    //
+    // JP: Forward Direction とほぼ平行にならない
+    //     Temporary Reference Axis を選択する。
+    VECTOR referenceAxis =
+        std::abs(forward.y) < 0.99f
+        ? VGet(0.0f, 1.0f, 0.0f)
+        : VGet(1.0f, 0.0f, 0.0f);
+
+
+    // EN: Build two perpendicular basis vectors around
+    //     the cone's forward axis.
+    //
+    // JP: Cone の Forward Axis を中心とする
+    //     2 本の直交 Basis Vector を作成する。
+    VECTOR right =
+        VNorm(
+            VCross(
+                referenceAxis,
+                forward));
+
+    VECTOR up =
+        VNorm(
+            VCross(
+                forward,
+                right));
+
+
+    const VECTOR apex =
+        VGet(
+            cone.position.x,
+            cone.position.y,
+            cone.position.z);
+
+
+    const VECTOR baseCenter =
+        VAdd(
+            apex,
+            VScale(
+                forward,
+                cone.range));
+
+    // EN: Use a deliberately obvious debug color.
+    //     This is temporary geometry validation only.
+    //
+    // JP: Geometry 確認用として分かりやすい Debug Color を使用する。
+    //     最終的な Volumetric Color ではない。
+    const unsigned int debugColor =
+        GetColor(
+            180,
+            210,
+            255);
+
+    const VECTOR debugApex = apex;
+
+    const VECTOR debugForwardEnd =
+        VAdd(
+            debugApex,
+            VScale(forward, 3.0f));
+
+    const VECTOR debugBackwardEnd =
+        VSub(
+            debugApex,
+            VScale(forward, 3.0f));
+
+    DrawLine3D(
+        debugApex,
+        debugForwardEnd,
+        GetColor(255, 0, 0));
+
+    DrawLine3D(
+        debugApex,
+        debugBackwardEnd,
+        GetColor(0, 255, 0));
+
+
+    SetDrawBlendMode(
+        DX_BLENDMODE_ALPHA,
+        80);
+
+
+    for (int i = 0;
+        i < SegmentCount;
+        ++i)
+    {
+        const float angle0 =
+            TwoPi *
+            static_cast<float>(i) /
+            static_cast<float>(SegmentCount);
+
+        const float angle1 =
+            TwoPi *
+            static_cast<float>(i + 1) /
+            static_cast<float>(SegmentCount);
+
+
+        const VECTOR radial0 =
+            VAdd(
+                VScale(
+                    right,
+                    std::cos(angle0) * radius),
+                VScale(
+                    up,
+                    std::sin(angle0) * radius));
+
+        const VECTOR radial1 =
+            VAdd(
+                VScale(
+                    right,
+                    std::cos(angle1) * radius),
+                VScale(
+                    up,
+                    std::sin(angle1) * radius));
+
+
+        const VECTOR base0 =
+            VAdd(
+                baseCenter,
+                radial0);
+
+        const VECTOR base1 =
+            VAdd(
+                baseCenter,
+                radial1);
+
+
+        // EN: Draw one side triangle of the cone.
+        //
+        // JP: Cone Side を構成する Triangle を 1 枚描画する。
+        DrawTriangle3D(
+            apex,
+            base0,
+            base1,
+            debugColor,
+            TRUE);
+    }
+
+
+    // EN: Restore blend/culling exactly. DxLib has no public 3D depth getters;
+    //     this pass is the project's only depth-state writer, so restore the
+    //     primitive defaults (test/write disabled), not an invented TRUE state.
+    //
+    // JP: ブレンドとカリングは呼び出し前の状態へ戻す。DxLib には
+    //     3D 深度状態の取得 API がなく、本パスだけがその状態を変更するため、
+    //     プリミティブの既定値（テスト・書き込み無効）へ戻す。
+    SetDrawBlendMode(previousBlendMode, previousBlendParam);
+    SetUseBackCulling(previousCulling);
+    SetUseZBuffer3D(FALSE);
+    SetWriteZBuffer3D(FALSE);
 }

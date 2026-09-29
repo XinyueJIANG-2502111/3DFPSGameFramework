@@ -10,6 +10,9 @@
 #include "Engine/Rendering/FogSettings.h"
 #include "Engine/Rendering/Fog/ShaderFogData.h"
 
+#include "Engine/Rendering/Volumetric/ShaderVolumetricData.h"
+#include "Engine/Rendering/Volumetric/VolumetricCone.h"
+
 // forward declaration
 class ModelInstance;
 class IShaderResource;
@@ -51,6 +54,12 @@ public:
         const char* vertexShaderPath,
         const char* pixelShaderPath) override;
 
+    void SetVolumetricSettings(
+        const ShaderVolumetricData& settings) override;
+
+    void DrawVolumetricCone(
+        const VolumetricCone& cone) override;
+
 public:
     void Shutdown() override;
 
@@ -90,4 +99,13 @@ private:
 
     void EnsureCameraConstantBuffer();
     void UpdateCameraConstantBuffer();
+
+private:
+    ShaderVolumetricData m_volumetricData;
+
+    int m_volumetricConstantBufferHandle =
+        InvalidHandle;
+
+    void EnsureVolumetricConstantBuffer();
+    void UpdateVolumetricConstantBuffer();
 };

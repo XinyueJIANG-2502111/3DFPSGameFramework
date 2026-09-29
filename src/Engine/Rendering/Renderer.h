@@ -6,11 +6,14 @@
 class IModelResource;
 class ModelInstance;
 class IShaderResource;
+class ShaderVolumetricData;
+
 struct Vector3;
 struct FogSettings;
 struct AmbientLight;
 struct PointLight;
 struct SpotLight;
+struct VolumetricCone;
 
 class IRendererBackend
 {
@@ -48,12 +51,26 @@ public:
     virtual void SetCameraPosition(
         const Vector3& position) = 0;
 
+    virtual void SetVolumetricSettings(
+        const ShaderVolumetricData& settings) = 0;
+
+    // EN: Draws a volumetric light cone using backend-specific rendering.
+    //
+    // JP: Backend 固有の Rendering を使用して
+    //     Volumetric Light Cone を描画する。
+    virtual void DrawVolumetricCone(
+        const VolumetricCone& cone) = 0;
+
+    //=============================================================================
+    // shutdown
+    //=============================================================================
     // EN: Releases backend-owned rendering resources before
     //     the graphics platform is shut down.
     //
     // JP: Graphics Platform が終了する前に、Backend が所有する
     //     Rendering Resource を解放する。
     virtual void Shutdown() = 0;
+    //=============================================================================
 };
 
 class Renderer
@@ -86,6 +103,9 @@ public:
 
     void SetCameraPosition(
         const Vector3& position);
+
+    void SetVolumetricSettings(const ShaderVolumetricData& settings);
+    void DrawVolumetricCone(const VolumetricCone& cone);
 
 private:
     IRendererBackend& m_backend;
