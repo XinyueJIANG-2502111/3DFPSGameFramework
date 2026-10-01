@@ -2,7 +2,7 @@
 
 #include "Engine/Input/InputAction.h"
 #include "Engine/Input/InputMap.h"
-#include "Engine/Rendering/Camera.h"
+#include "Engine/Rendering/Camera/Camera.h"
 
 FPSController::FPSController(InputMap& inputMap)
     : m_inputMap(inputMap)

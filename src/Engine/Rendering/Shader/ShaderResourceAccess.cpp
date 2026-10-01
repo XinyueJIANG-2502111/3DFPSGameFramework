@@ -1,7 +1,7 @@
-#include "Engine/Rendering/ShaderResourceAccess.h"
+#include "Engine/Rendering/Shader/ShaderResourceAccess.h"
 
-#include "Engine/Rendering/Shader.h"
-#include "Engine/Rendering/ShaderImpl.h"
+#include "Engine/Rendering/Shader/Shader.h"
+#include "Engine/Rendering/Shader/ShaderImpl.h"
 
 const IShaderResource* ShaderResourceAccess::Get(
     const Shader& shader)

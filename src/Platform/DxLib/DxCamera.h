@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Engine/Rendering/ICameraBackend.h"
+#include "Engine/Rendering/Camera/ICameraBackend.h"
 
 class DxCamera final : public ICameraBackend
 {

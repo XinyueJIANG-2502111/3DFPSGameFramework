@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-#include "Engine/Rendering/IShaderResource.h"
+#include "Engine/Rendering/Shader/IShaderResource.h"
 
 class Shader::Impl
 {

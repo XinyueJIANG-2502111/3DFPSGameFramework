@@ -4,8 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "Engine/Rendering/ModelLoader.h"
-#include "Engine/Rendering/ShaderLoader.h"
+#include "Engine/Rendering/Model/ModelLoader.h"
+#include "Engine/Rendering/Shader/ShaderLoader.h"
 
 class Model;
 class Shader;

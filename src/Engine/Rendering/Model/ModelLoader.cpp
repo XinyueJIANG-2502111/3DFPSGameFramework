@@ -1,9 +1,8 @@
-#include "Engine/Rendering/ModelLoader.h"
+#include "Engine/Rendering/Model/ModelLoader.h"
+#include "Engine/Rendering/Model/IModelResource.h"
+#include "Engine/Rendering/Model/Model.h"
 
-#include "Engine/Rendering/Model.h"
 #include "Engine/Rendering/Renderer.h"
-
-#include "Engine/Rendering/IModelResource.h"
 
 #include <utility>
 

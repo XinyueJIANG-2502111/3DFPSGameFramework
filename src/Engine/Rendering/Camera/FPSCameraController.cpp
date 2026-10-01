@@ -1,7 +1,7 @@
-#include "Engine/Rendering/FPSCameraController.h"
+#include "Engine/Rendering/Camera/FPSCameraController.h"
+#include "Engine/Rendering/Camera/Camera.h"
 
 #include "Engine/Input/IInput.h"
-#include "Engine/Rendering/Camera.h"
 
 #include <algorithm>
 #include <numbers>

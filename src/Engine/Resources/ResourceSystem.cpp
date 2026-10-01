@@ -1,7 +1,7 @@
 #include "Engine/Resources/ResourceSystem.h"
 
-#include "Engine/Rendering/Model.h"
-#include "Engine/Rendering/Shader.h"
+#include "Engine/Rendering/Model/Model.h"
+#include "Engine/Rendering/Shader/Shader.h"
 
 #include <filesystem>
 #include <memory>

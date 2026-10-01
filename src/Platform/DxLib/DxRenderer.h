@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Engine/Rendering/Renderer.h"
-#include "Engine/Rendering/ShaderCameraData.h"
+#include "Engine/Rendering/Camera/ShaderCameraData.h"
 
 #include "Engine/Rendering/Lighting/AmbientLight.h"
 #include "Engine/Rendering/Lighting/SpotLight.h"
 #include "Engine/Rendering/Lighting/ShaderLightingData.h"
 
-#include "Engine/Rendering/FogSettings.h"
+#include "Engine/Rendering/Fog/FogSettings.h"
 #include "Engine/Rendering/Fog/ShaderFogData.h"
 
 #include "Engine/Rendering/Volumetric/ShaderVolumetricData.h"
@@ -28,6 +28,10 @@ class DxRenderer final
 public:
     void Draw(
         const ModelInstance& instance) override;
+
+    void Draw(
+        const ModelInstance& instance,
+        const Shader& shader) override;
 
     std::unique_ptr<IModelResource> CreateModelResource(
         const char* filePath) override;
@@ -58,7 +62,23 @@ public:
         const ShaderVolumetricData& settings) override;
 
     void DrawVolumetricCone(
-        const VolumetricCone& cone) override;
+        const VolumetricCone& cone,
+        const Shader& shader) override;
+
+public:
+    void BeginSceneRender(
+        int width,
+        int height) override;
+
+    void EndSceneRender(
+        int width,
+        int height) override;
+
+    void BeginSceneDepthRender(
+        int width,
+        int height) override;
+
+    void EndSceneDepthRender() override;
 
 public:
     void Shutdown() override;
@@ -108,4 +128,56 @@ private:
 
     void EnsureVolumetricConstantBuffer();
     void UpdateVolumetricConstantBuffer();
+
+private:
+    int m_sceneColorHandle =
+        InvalidHandle;
+
+    int m_sceneColorWidth = 0;
+    int m_sceneColorHeight = 0;
+
+    void EnsureSceneRenderTarget(
+        int width,
+        int height);
+
+    int m_sceneDepthHandle =
+        InvalidHandle;
+
+    int m_sceneDepthWidth = 0;
+    int m_sceneDepthHeight = 0;
+
+    bool m_skipSceneDepthDraw = false;
+    int m_sceneDepthPreviousBlendMode = 0;
+    int m_sceneDepthPreviousBlendParam = 0;
+
+    void EnsureSceneDepthRenderTarget(
+        int width,
+        int height);
+
+private:
+	int m_sceneDepthDebugPixelShaderHandle =
+		InvalidHandle;
+
+	void EnsureSceneDepthDebugShader();
+	void DrawSceneDepthDebug(
+		int width,
+		int height);
+
+	Vector3 m_clearColor{
+		0.0f,
+		0.0f,
+		0.0f
+	};
+
+private:
+    int m_testRenderTargetHandle =
+        InvalidHandle;
+
+    void EnsureTestRenderTarget(
+        int width,
+        int height);
+
+    int m_testRenderTargetWidth = 0;
+    int m_testRenderTargetHeight = 0;
+
 };

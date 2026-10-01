@@ -1,6 +1,6 @@
-#include "Engine/Rendering/ModelInstance.h"
+#include "Engine/Rendering/Model/ModelInstance.h"
 
-#include "Engine/Rendering/Model.h"
+#include "Engine/Rendering/Model/Model.h"
 
 #include <utility>
 

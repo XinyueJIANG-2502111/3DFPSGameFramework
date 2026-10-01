@@ -12,4 +12,6 @@ public:
 
     void BeginFrame() override;
     void EndFrame() override;
+
+    ScreenSize GetScreenSize() const override;
 };

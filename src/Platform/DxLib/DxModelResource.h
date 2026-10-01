@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Engine/Rendering/IModelResource.h"
+#include "Engine/Rendering/Model/IModelResource.h"
+
 #include "Platform/DxLib/DxModel.h"
 
 class DxModelResource final : public IModelResource

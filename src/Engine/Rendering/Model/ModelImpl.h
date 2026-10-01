@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-#include "Engine/Rendering/IModelResource.h"
+#include "Engine/Rendering/Model/IModelResource.h"
 
 class Model::Impl
 {

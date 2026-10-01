@@ -1,6 +1,6 @@
 #include "Platform/DxLib/DxCamera.h"
 
-#include "Engine/Rendering/Camera.h"
+#include "Engine/Rendering/Camera/Camera.h"
 
 #include <DxLib.h>
 

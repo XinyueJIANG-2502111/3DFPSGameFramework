@@ -1,11 +1,11 @@
 #include "Platform/DxLib/DxRenderer.h"
 
-#include "Engine/Rendering/IModelResource.h"
-#include "Engine/Rendering/Model.h"
-#include "Engine/Rendering/ModelInstance.h"
-#include "Engine/Rendering/ModelResourceAccess.h"
+#include "Engine/Rendering/Model/IModelResource.h"
+#include "Engine/Rendering/Model/Model.h"
+#include "Engine/Rendering/Model/ModelInstance.h"
+#include "Engine/Rendering/Model/ModelResourceAccess.h"
 
-#include "Engine/Rendering/FogSettings.h"
+#include "Engine/Rendering/Fog/FogSettings.h"
 
 #include "Engine/Rendering/Lighting/SpotLight.h"
 #include "Engine/Rendering/Lighting/AmbientLight.h"
@@ -13,8 +13,8 @@
 #include "Engine/Math/Matrix4.h"
 #include "Engine/Math/Vector3.h"
 
-#include "Engine/Rendering/Shader.h"
-#include "Engine/Rendering/ShaderResourceAccess.h"
+#include "Engine/Rendering/Shader/Shader.h"
+#include "Engine/Rendering/Shader/ShaderResourceAccess.h"
 
 #include "Platform/DxLib/DxModelResource.h"
 #include "Platform/DxLib/DxShaderResource.h"
@@ -138,6 +138,109 @@ void DxRenderer::Draw(
 }
 
 
+void DxRenderer::Draw(
+    const ModelInstance& instance,
+    const Shader& shader)
+{
+    const std::shared_ptr<Model>& model =
+        instance.GetModel();
+
+    if (m_skipSceneDepthDraw ||
+        !model ||
+        !model->IsValid() ||
+        !shader.IsValid())
+    {
+        return;
+    }
+
+    const auto* dxResource =
+        dynamic_cast<const DxModelResource*>(
+            ModelResourceAccess::Get(
+                *model));
+
+    const auto* dxShader =
+        dynamic_cast<const DxShaderResource*>(
+            ShaderResourceAccess::Get(
+                shader));
+
+    if (dxResource == nullptr ||
+        dxShader == nullptr ||
+        !dxResource->IsValid() ||
+        !dxShader->IsValid())
+    {
+        return;
+    }
+
+    const int handle =
+        dxResource->GetModel().GetHandle();
+
+    // EN: Enable depth testing and depth writing for this MV1 model
+    //     during the scene-depth pass.
+    //
+    // JP: Scene Depth Pass 中、この MV1 Model に対して
+    //     Depth Test と Depth Write を有効にする。
+    MV1SetUseZBuffer(
+        handle,
+        TRUE);
+
+    MV1SetWriteZBuffer(
+        handle,
+        TRUE);
+
+    const MATRIX dxWorldMatrix =
+        ToDxMatrix(
+            instance.GetTransform().ToMatrix());
+
+    MV1SetMatrix(
+        handle,
+        dxWorldMatrix);
+
+
+    // EN: Upload the current world-space camera position used
+    //     by the scene-depth pixel shader.
+    //
+    // JP: Scene Depth Pixel Shader が使用する現在の
+    //     World Space Camera Position を GPU へ送る。
+    UpdateCameraConstantBuffer();
+
+
+    // EN: Temporarily override the model material shader with
+    //     the shader supplied by the current rendering pass.
+    //
+    // JP: 現在の Rendering Pass から渡された Shader で
+    //     Model Material Shader を一時的に置き換える。
+    MV1SetUseOrigShader(
+        TRUE);
+
+    SetUseVertexShader(
+        dxShader->GetVertexShaderHandle());
+
+    SetUsePixelShader(
+        dxShader->GetPixelShaderHandle());
+
+
+    // EN: Execute the actual model draw while the pass-specific
+    //     shader pair is active.
+    //
+    // JP: Pass 専用 Shader が有効な状態で
+    //     実際の Model Draw を実行する。
+    MV1DrawModel(
+        handle);
+
+
+    // EN: Restore DxLib's normal model-rendering state so the
+    //     pass shader cannot leak into later draw calls.
+    //
+    // JP: Pass Shader が後続 Draw Call に漏れないよう、
+    //     DxLib の通常 Model Rendering State に戻す。
+    MV1SetUseOrigShader(
+        FALSE);
+
+    SetUseVertexShader(-1);
+    SetUsePixelShader(-1);
+}
+
+
 std::unique_ptr<IModelResource>
 DxRenderer::CreateModelResource(
     const char* filePath)
@@ -202,19 +305,28 @@ void DxRenderer::SetFog(
 void DxRenderer::SetClearColor(
     const Vector3& color)
 {
-    const float red =
-        std::clamp(color.x, 0.0f, 1.0f);
+    m_clearColor.x =
+        std::clamp(
+            color.x,
+            0.0f,
+            1.0f);
 
-    const float green =
-        std::clamp(color.y, 0.0f, 1.0f);
+    m_clearColor.y =
+        std::clamp(
+            color.y,
+            0.0f,
+            1.0f);
 
-    const float blue =
-        std::clamp(color.z, 0.0f, 1.0f);
+    m_clearColor.z =
+        std::clamp(
+            color.z,
+            0.0f,
+            1.0f);
 
     SetBackgroundColor(
-        static_cast<int>(red * 255.0f),
-        static_cast<int>(green * 255.0f),
-        static_cast<int>(blue * 255.0f));
+        static_cast<int>(m_clearColor.x * 255.0f),
+        static_cast<int>(m_clearColor.y * 255.0f),
+        static_cast<int>(m_clearColor.z * 255.0f));
 }
 
 void DxRenderer::SetPointLight(
@@ -563,36 +675,6 @@ void DxRenderer::UpdateFogConstantBuffer()
         5);
 }
 
-void DxRenderer::Shutdown()
-{
-    if (m_spotLightHandle != InvalidHandle)
-    {
-        DeleteLightHandle(
-            m_spotLightHandle);
-
-        m_spotLightHandle =
-            InvalidHandle;
-    }
-
-    if (m_lightingConstantBufferHandle != InvalidHandle)
-    {
-        DeleteShaderConstantBuffer(
-            m_lightingConstantBufferHandle);
-
-        m_lightingConstantBufferHandle =
-            InvalidHandle;
-
-        m_fogConstantBufferHandle =
-            InvalidHandle;
-
-        m_cameraConstantBufferHandle =
-            InvalidHandle;
-
-        m_volumetricConstantBufferHandle =
-            InvalidHandle;
-    }
-}
-
 void DxRenderer::SetCameraPosition(
     const Vector3& position)
 {
@@ -706,90 +788,100 @@ void DxRenderer::UpdateVolumetricConstantBuffer()
 }
 
 void DxRenderer::DrawVolumetricCone(
-    const VolumetricCone& cone)
+    const VolumetricCone& cone,
+    const Shader& shader)
 {
     constexpr int SegmentCount = 20;
+    constexpr int LayerCount = 3;
     constexpr float TwoPi = 6.28318530718f;
-    constexpr float HalfPi = TwoPi * 0.25f;
 
-    // EN: Reject invalid geometry before changing any global draw state.
-    //     The angle is an axis-to-edge half-angle, not a full aperture.
-    //
-    // JP: 描画状態を変更する前に無効な形状を除外する。
-    //     角度は開口角全体ではなく、中心軸から外縁までの半角である。
-    const float directionLength =
-        std::hypot(cone.direction.x, cone.direction.y, cone.direction.z);
+    // ------------------------------------------------------------
+    // Validate input
+    // ------------------------------------------------------------
 
-    if (!std::isfinite(cone.position.x) ||
-        !std::isfinite(cone.position.y) ||
-        !std::isfinite(cone.position.z) ||
-        !std::isfinite(directionLength) || directionLength <= 0.000001f ||
-        !std::isfinite(cone.range) || cone.range <= 0.0f ||
-        !std::isfinite(cone.outerAngle) ||
-        cone.outerAngle <= 0.0f || cone.outerAngle >= HalfPi)
+    if (cone.range <= 0.0f)
     {
         return;
     }
 
-    const float radius =
-        std::tan(cone.outerAngle) *
-        cone.range;
+    const VECTOR rawForward =
+        VGet(
+            cone.direction.x,
+            cone.direction.y,
+            cone.direction.z);
 
-    if (!std::isfinite(radius) || radius <= 0.0f)
+    const float forwardLength =
+        VSize(rawForward);
+
+    if (forwardLength <= 0.0001f)
     {
         return;
     }
 
-    // EN: Forward points from the apex toward the beam end in world space.
-    // JP: Forward はワールド空間で頂点から光束の終点へ向かう方向とする。
-    const VECTOR forward = VGet(
-        cone.direction.x / directionLength,
-        cone.direction.y / directionLength,
-        cone.direction.z / directionLength);
 
-    int previousBlendMode = DX_BLENDMODE_NOBLEND;
-    int previousBlendParam = 0;
-    GetDrawBlendMode(&previousBlendMode, &previousBlendParam);
-    const int previousCulling = GetUseBackCulling();
+    // ------------------------------------------------------------
+    // Access backend shader resource
+    // ------------------------------------------------------------
 
-    // EN: Keep both faces visible from inside or outside the debug shell.
-    //     Test against scene depth without writing transparent geometry.
+    const IShaderResource* shaderResource =
+        ShaderResourceAccess::Get(
+            shader);
+
+    const auto* dxShader =
+        dynamic_cast<const DxShaderResource*>(
+            shaderResource);
+
+    if (dxShader == nullptr ||
+        !dxShader->IsValid())
+    {
+        return;
+    }
+
+
+    // ------------------------------------------------------------
+    // Build cone basis
+    // ------------------------------------------------------------
+
+    const VECTOR forward =
+        VNorm(rawForward);
+
+
+    // EN: Select a reference axis that is not nearly parallel
+    //     to the cone forward direction.
     //
-    // JP: デバッグ外殻の内側と外側の両方から見えるよう両面を描画する。
-    //     シーンの深度で遮蔽を判定するが、透明形状の深度は書き込まない。
-    SetUseBackCulling(DX_CULLING_NONE);
-    SetUseZBuffer3D(TRUE);
-    SetWriteZBuffer3D(FALSE);
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 160);
-
-    // EN: Select a temporary reference axis that is not
-    //     nearly parallel to the forward direction.
-    //
-    // JP: Forward Direction とほぼ平行にならない
-    //     Temporary Reference Axis を選択する。
-    VECTOR referenceAxis =
+    // JP: Cone の Forward Direction とほぼ平行にならない
+    //     Reference Axis を選択する。
+    const VECTOR referenceAxis =
         std::abs(forward.y) < 0.99f
-        ? VGet(0.0f, 1.0f, 0.0f)
-        : VGet(1.0f, 0.0f, 0.0f);
+        ? VGet(
+            0.0f,
+            1.0f,
+            0.0f)
+        : VGet(
+            1.0f,
+            0.0f,
+            0.0f);
 
 
-    // EN: Build two perpendicular basis vectors around
-    //     the cone's forward axis.
+    // EN: Construct an orthonormal basis around the cone axis.
     //
-    // JP: Cone の Forward Axis を中心とする
-    //     2 本の直交 Basis Vector を作成する。
-    VECTOR right =
+    // JP: Cone Axis を中心とした直交 Basis を構築する。
+    const VECTOR right =
         VNorm(
             VCross(
                 referenceAxis,
                 forward));
 
-    VECTOR up =
+    const VECTOR up =
         VNorm(
             VCross(
                 forward,
                 right));
 
+
+    // ------------------------------------------------------------
+    // Build shared cone geometry data
+    // ------------------------------------------------------------
 
     const VECTOR apex =
         VGet(
@@ -798,6 +890,11 @@ void DxRenderer::DrawVolumetricCone(
             cone.position.z);
 
 
+    // EN: Direction semantics are apex -> beam end,
+    //     therefore the cone base lies along +forward.
+    //
+    // JP: Direction は Apex から Beam End へ向かうため、
+    //     Cone Base は +Forward 側に配置する。
     const VECTOR baseCenter =
         VAdd(
             apex,
@@ -805,111 +902,1010 @@ void DxRenderer::DrawVolumetricCone(
                 forward,
                 cone.range));
 
-    // EN: Use a deliberately obvious debug color.
-    //     This is temporary geometry validation only.
-    //
-    // JP: Geometry 確認用として分かりやすい Debug Color を使用する。
-    //     最終的な Volumetric Color ではない。
-    const unsigned int debugColor =
-        GetColor(
-            180,
-            210,
-            255);
 
-    const VECTOR debugApex = apex;
-
-    const VECTOR debugForwardEnd =
-        VAdd(
-            debugApex,
-            VScale(forward, 3.0f));
-
-    const VECTOR debugBackwardEnd =
-        VSub(
-            debugApex,
-            VScale(forward, 3.0f));
-
-    DrawLine3D(
-        debugApex,
-        debugForwardEnd,
-        GetColor(255, 0, 0));
-
-    DrawLine3D(
-        debugApex,
-        debugBackwardEnd,
-        GetColor(0, 255, 0));
+    VERTEX3DSHADER vertices[
+        SegmentCount *
+            LayerCount *
+            3]{};
 
 
-    SetDrawBlendMode(
-        DX_BLENDMODE_ALPHA,
-        80);
+        const COLOR_U8 specularColor =
+            GetColorU8(
+                0,
+                0,
+                0,
+                0);
 
 
-    for (int i = 0;
-        i < SegmentCount;
-        ++i)
-    {
-        const float angle0 =
-            TwoPi *
-            static_cast<float>(i) /
-            static_cast<float>(SegmentCount);
-
-        const float angle1 =
-            TwoPi *
-            static_cast<float>(i + 1) /
-            static_cast<float>(SegmentCount);
+        struct VolumetricLayer
+        {
+            float angleScale;
+            float weight;
+        };
 
 
-        const VECTOR radial0 =
-            VAdd(
-                VScale(
-                    right,
-                    std::cos(angle0) * radius),
-                VScale(
-                    up,
-                    std::sin(angle0) * radius));
+        constexpr VolumetricLayer Layers[
+            LayerCount]
+        {
+            // Outer
+            {
+                1.00f,
+                0.20f
+            },
 
-        const VECTOR radial1 =
-            VAdd(
-                VScale(
-                    right,
-                    std::cos(angle1) * radius),
-                VScale(
-                    up,
-                    std::sin(angle1) * radius));
+            // Middle
+            {
+                0.72f,
+                0.35f
+            },
 
-
-        const VECTOR base0 =
-            VAdd(
-                baseCenter,
-                radial0);
-
-        const VECTOR base1 =
-            VAdd(
-                baseCenter,
-                radial1);
+            // Inner
+            {
+                0.42f,
+                0.55f
+            }
+        };
 
 
-        // EN: Draw one side triangle of the cone.
+        // ------------------------------------------------------------
+        // Build nested cone layers
+        // ------------------------------------------------------------
+
+        for (int layerIndex = 0;
+            layerIndex < LayerCount;
+            ++layerIndex)
+        {
+            const VolumetricLayer& layer =
+                Layers[layerIndex];
+
+
+            // EN: Each nested layer uses a smaller half-angle while
+            //     preserving the same origin and beam end distance.
+            //
+            // JP: 各 Nested Layer は同じ Origin と Beam Distance を保ち、
+            //     より小さい Half Angle を使用する。
+            const float layerAngle =
+                cone.outerAngle *
+                layer.angleScale;
+
+            const float radius =
+                std::tan(layerAngle) *
+                cone.range;
+
+
+            const float clampedWeight =
+                (std::clamp)(
+                    layer.weight,
+                    0.0f,
+                    1.0f);
+
+            const unsigned char layerAlpha =
+                static_cast<unsigned char>(
+                    clampedWeight *
+                    255.0f);
+
+
+            const COLOR_U8 diffuseColor =
+                GetColorU8(
+                    255,
+                    255,
+                    255,
+                    layerAlpha);
+
+
+            for (int i = 0;
+                i < SegmentCount;
+                ++i)
+            {
+                const float angle0 =
+                    TwoPi *
+                    static_cast<float>(i) /
+                    static_cast<float>(
+                        SegmentCount);
+
+                const float angle1 =
+                    TwoPi *
+                    static_cast<float>(i + 1) /
+                    static_cast<float>(
+                        SegmentCount);
+
+
+                const VECTOR radial0 =
+                    VAdd(
+                        VScale(
+                            right,
+                            std::cos(angle0) *
+                            radius),
+                        VScale(
+                            up,
+                            std::sin(angle0) *
+                            radius));
+
+
+                const VECTOR radial1 =
+                    VAdd(
+                        VScale(
+                            right,
+                            std::cos(angle1) *
+                            radius),
+                        VScale(
+                            up,
+                            std::sin(angle1) *
+                            radius));
+
+
+                const VECTOR base0 =
+                    VAdd(
+                        baseCenter,
+                        radial0);
+
+                const VECTOR base1 =
+                    VAdd(
+                        baseCenter,
+                        radial1);
+
+
+                const int triangleIndex =
+                    layerIndex *
+                    SegmentCount +
+                    i;
+
+                const int vertexIndex =
+                    triangleIndex *
+                    3;
+
+
+                VERTEX3DSHADER& v0 =
+                    vertices[
+                        vertexIndex + 0];
+
+                VERTEX3DSHADER& v1 =
+                    vertices[
+                        vertexIndex + 1];
+
+                VERTEX3DSHADER& v2 =
+                    vertices[
+                        vertexIndex + 2];
+
+
+                // ----------------------------------------------------
+                // Position
+                // ----------------------------------------------------
+
+                v0.pos = apex;
+                v1.pos = base0;
+                v2.pos = base1;
+
+
+                // ----------------------------------------------------
+                // Normal
+                // ----------------------------------------------------
+
+                // EN: The current volumetric shader does not use
+                //     geometric normals yet, but VERTEX3DSHADER still
+                //     receives a valid fallback normal.
+                //
+                // JP: 現在の Volumetric Shader では Geometry Normal を
+                //     使用しないが、有効な Fallback Normal を設定する。
+                const VECTOR dummyNormal =
+                    VScale(
+                        forward,
+                        -1.0f);
+
+                v0.norm = dummyNormal;
+                v1.norm = dummyNormal;
+                v2.norm = dummyNormal;
+
+
+                // ----------------------------------------------------
+                // Vertex color
+                // ----------------------------------------------------
+
+                v0.dif = diffuseColor;
+                v1.dif = diffuseColor;
+                v2.dif = diffuseColor;
+
+                v0.spc = specularColor;
+                v1.spc = specularColor;
+                v2.spc = specularColor;
+
+
+                // ----------------------------------------------------
+                // Texture coordinates
+                // ----------------------------------------------------
+
+                v0.u = 0.0f;
+                v0.v = 0.0f;
+                v0.su = 0.0f;
+                v0.sv = 0.0f;
+
+                v1.u = 0.0f;
+                v1.v = 0.0f;
+                v1.su = 0.0f;
+                v1.sv = 0.0f;
+
+                v2.u = 0.0f;
+                v2.v = 0.0f;
+                v2.su = 0.0f;
+                v2.sv = 0.0f;
+            }
+        }
+
+
+        // ------------------------------------------------------------
+        // Render state
+        // ------------------------------------------------------------
+
+        int previousBlendMode = 0;
+        int previousBlendParam = 0;
+
+        GetDrawBlendMode(
+            &previousBlendMode,
+            &previousBlendParam);
+
+        const int previousBackCulling =
+            GetUseBackCulling();
+
+
+        // EN: The camera may be inside the volume, so both sides of
+        //     the cone shell must remain visible during this V1 pass.
         //
-        // JP: Cone Side を構成する Triangle を 1 枚描画する。
-        DrawTriangle3D(
-            apex,
-            base0,
-            base1,
-            debugColor,
+        // JP: Camera が Volume 内部に入る可能性があるため、
+        //     V1 Pass では Cone Shell を両面描画する。
+        SetUseBackCulling(
+            FALSE);
+
+
+        // EN: Test against scene depth, but do not let this transparent
+        //     volume overwrite the depth buffer.
+        //
+        // JP: Scene Depth との判定は行うが、
+        //     半透明 Volume 自体は Depth Buffer に書き込まない。
+        SetUseZBuffer3D(
             TRUE);
+
+        SetWriteZBuffer3D(
+            FALSE);
+
+
+        SetDrawBlendMode(
+            DX_BLENDMODE_ALPHA,
+            160);
+
+
+        // ------------------------------------------------------------
+        // Activate volumetric shader
+        // ------------------------------------------------------------
+
+        SetUseVertexShader(
+            dxShader->GetVertexShaderHandle());
+
+        SetUsePixelShader(
+            dxShader->GetPixelShaderHandle());
+
+
+        // EN: The volumetric shader uses both the current spotlight
+        //     state and dedicated volumetric parameters.
+        //
+        // JP: Volumetric Shader は現在の SpotLight State と
+        //     専用 Volumetric Parameter の両方を使用する。
+        UpdateLightingConstantBuffer();
+        UpdateVolumetricConstantBuffer();
+
+
+        // ------------------------------------------------------------
+        // Draw
+        // ------------------------------------------------------------
+
+        DrawPolygon3DToShader(
+            vertices,
+            SegmentCount *
+            LayerCount);
+
+
+        // ------------------------------------------------------------
+        // Clear shader state
+        // ------------------------------------------------------------
+
+        SetUseVertexShader(-1);
+        SetUsePixelShader(-1);
+
+
+        // ------------------------------------------------------------
+        // Restore render state
+        // ------------------------------------------------------------
+
+        SetDrawBlendMode(
+            previousBlendMode,
+            previousBlendParam);
+
+        SetUseBackCulling(
+            previousBackCulling);
+
+
+        // EN: Current renderer code assumes normal scene rendering
+        //     uses depth testing and depth writing after this pass.
+        //
+        // JP: 現在の Renderer では、この Pass 後の通常描画が
+        //     Depth Test と Depth Write を使用する前提で戻す。
+        SetUseZBuffer3D(
+            TRUE);
+
+        SetWriteZBuffer3D(
+            TRUE);
+}
+
+void DxRenderer::EnsureSceneRenderTarget(
+    int width,
+    int height)
+{
+    if (width <= 0 ||
+        height <= 0)
+    {
+        return;
+    }
+
+    // EN: Reuse the current render target when its dimensions
+    //     already match the requested scene size.
+    //
+    // JP: 現在の Render Target Size が要求された Scene Size と
+    //     一致する場合は既存 Resource を再利用する。
+    if (m_sceneColorHandle != InvalidHandle &&
+        m_sceneColorWidth == width &&
+        m_sceneColorHeight == height)
+    {
+        return;
     }
 
 
-    // EN: Restore blend/culling exactly. DxLib has no public 3D depth getters;
-    //     this pass is the project's only depth-state writer, so restore the
-    //     primitive defaults (test/write disabled), not an invented TRUE state.
+    // EN: Destroy the old render target before recreating it
+    //     with the new dimensions.
     //
-    // JP: ブレンドとカリングは呼び出し前の状態へ戻す。DxLib には
-    //     3D 深度状態の取得 API がなく、本パスだけがその状態を変更するため、
-    //     プリミティブの既定値（テスト・書き込み無効）へ戻す。
-    SetDrawBlendMode(previousBlendMode, previousBlendParam);
-    SetUseBackCulling(previousCulling);
-    SetUseZBuffer3D(FALSE);
-    SetWriteZBuffer3D(FALSE);
+    // JP: 新しい Size で再作成する前に、
+    //     古い Render Target を解放する。
+    if (m_sceneColorHandle != InvalidHandle)
+    {
+        DeleteGraph(
+            m_sceneColorHandle);
+
+        m_sceneColorHandle =
+            InvalidHandle;
+
+        m_sceneColorWidth = 0;
+        m_sceneColorHeight = 0;
+    }
+
+
+    m_sceneColorHandle =
+        MakeScreen(
+            width,
+            height,
+            TRUE);
+
+    if (m_sceneColorHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    m_sceneColorWidth =
+        width;
+
+    m_sceneColorHeight =
+        height;
+}
+
+void DxRenderer::BeginSceneRender(
+    int width,
+    int height)
+{
+    EnsureSceneRenderTarget(
+        width,
+        height);
+
+    EnsureSceneDepthRenderTarget(
+        width,
+        height);
+
+
+    if (m_sceneColorHandle == InvalidHandle)
+    {
+        return;
+    }
+
+
+    SetDrawScreen(
+        m_sceneColorHandle);
+
+    ClearDrawScreen();
+}
+
+void DxRenderer::EndSceneRender(
+    int width,
+    int height)
+{
+    if (m_sceneColorHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    SetDrawScreen(
+        DX_SCREEN_BACK);
+
+    DrawExtendGraph(
+        0,
+        0,
+        width,
+        height,
+        m_sceneColorHandle,
+        FALSE);
+}
+
+void DxRenderer::EnsureSceneDepthRenderTarget(
+    int width,
+    int height)
+{
+    if (width <= 0 ||
+        height <= 0)
+    {
+        return;
+    }
+
+    if (m_sceneDepthHandle != InvalidHandle &&
+        m_sceneDepthWidth == width &&
+        m_sceneDepthHeight == height)
+    {
+        return;
+    }
+
+    if (m_sceneDepthHandle != InvalidHandle)
+    {
+        DeleteGraph(
+            m_sceneDepthHandle);
+
+        m_sceneDepthHandle =
+            InvalidHandle;
+
+        m_sceneDepthWidth = 0;
+        m_sceneDepthHeight = 0;
+    }
+
+
+    // EN: Create a floating-point render target for linear scene depth.
+    //     Floating-point storage avoids the severe precision loss of
+    //     an ordinary 8-bit color render target.
+    //
+    // JP: Linear Scene Depth を保存するために
+    //     Floating-point Render Target を作成する。
+    //     通常の 8-bit Color Render Target による
+    //     深度精度の低下を避ける。
+    const int previousFloatType = GetDrawValidFloatTypeGraphCreateFlag();
+    const int previousChannelNum = GetCreateDrawValidGraphChannelNum();
+    const int previousBitDepth = GetCreateGraphChannelBitDepth();
+    const int previousZBuffer = GetDrawValidGraphCreateZBufferFlag();
+
+    SetDrawValidGraphCreateZBufferFlag(TRUE);
+
+    
+    SetDrawValidFloatTypeGraphCreateFlag(TRUE);
+
+    SetCreateDrawValidGraphChannelNum(4);
+
+    SetCreateGraphChannelBitDepth(32);
+
+
+    m_sceneDepthHandle =
+        MakeScreen(
+            width,
+            height,
+            TRUE);
+
+
+    // EN: Creation settings are global; restore the caller's values even
+    //     when allocation fails. The depth target owns its native Z-buffer.
+    //
+    // JP: 作成設定はグローバルなので、確保失敗時も呼び出し前の値へ戻す。
+    //     深度ターゲットには最前面を選ぶための専用 Z バッファを持たせる。
+    SetDrawValidFloatTypeGraphCreateFlag(previousFloatType);
+    SetCreateDrawValidGraphChannelNum(previousChannelNum);
+    SetCreateGraphChannelBitDepth(previousBitDepth);
+    SetDrawValidGraphCreateZBufferFlag(previousZBuffer);
+
+
+    if (m_sceneDepthHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    m_sceneDepthWidth =
+        width;
+
+    m_sceneDepthHeight =
+        height;
+}
+
+//void DxRenderer::BeginSceneDepthRender(
+//    int width,
+//    int height)
+//{
+//    m_skipSceneDepthDraw = true;
+//
+//    GetDrawBlendMode(
+//        &m_sceneDepthPreviousBlendMode,
+//        &m_sceneDepthPreviousBlendParam);
+//
+//    if (width <= 0 ||
+//        height <= 0)
+//    {
+//        return;
+//    }
+//
+//    EnsureSceneDepthRenderTarget(
+//        width,
+//        height);
+//
+//    if (m_sceneDepthHandle == InvalidHandle)
+//    {
+//        return;
+//    }
+//
+//    if (SetDrawScreen(
+//        m_sceneDepthHandle) == -1)
+//    {
+//        return;
+//    }
+//
+//    m_skipSceneDepthDraw = false;
+//
+//    SetDrawBlendMode(
+//        DX_BLENDMODE_NOBLEND,
+//        0);
+//
+//
+//     EN: Zero represents "no opaque surface" in the
+//         depth-as-color render target.
+//    
+//     JP: Depth-as-Color Render Target では 0 を
+//         「Opaque Surface が存在しない」値として使用する。
+//    SetBackgroundColor(
+//        255,
+//        0,
+//        0);
+//
+//    ClearDrawScreen();
+//
+//    SetBackgroundColor(
+//        static_cast<int>(
+//            m_clearColor.x * 255.0f),
+//        static_cast<int>(
+//            m_clearColor.y * 255.0f),
+//        static_cast<int>(
+//            m_clearColor.z * 255.0f));
+//
+//}
+void DxRenderer::BeginSceneDepthRender(
+    int width,
+    int height)
+{
+    m_skipSceneDepthDraw = true;
+
+    EnsureSceneDepthRenderTarget(
+        width,
+        height);
+
+    if (m_sceneDepthHandle ==
+        InvalidHandle)
+    {
+        return;
+    }
+
+    if (SetDrawScreen(
+        m_sceneDepthHandle) == -1)
+    {
+        return;
+    }
+
+    m_skipSceneDepthDraw = false;
+
+    //// EN: Diagnostic step.
+    ////     Use the offscreen scene-depth render target while keeping
+    ////     all other rendering state identical to the known-working
+    ////     back-buffer test.
+    ////
+    //// JP: 診断用 Step。
+    ////     動作確認済みの Back Buffer Test と同じ State を維持したまま、
+    ////     Offscreen Scene Depth Render Target のみを使用する。
+    //if (SetDrawScreen(
+    //    m_sceneDepthHandle) == -1)
+    //{
+    //    return;
+    //}
+
+    SetDrawBlendMode(
+        DX_BLENDMODE_NOBLEND,
+        0);
+
+    SetBackgroundColor(
+        0,
+        0,
+        0);
+
+    ClearDrawScreen();
+
+	// EN: SetBackgroundColor is global DxLib state.
+    //     Restore the normal scene clear color immediately after
+    //     clearing the depth-as-color target.
+    //
+    // JP: SetBackgroundColor は DxLib の Global State なので、
+    //     Depth-as-Color Target の Clear 後に通常 Scene 用の
+    //     Clear Color を直ちに復元する。
+	SetBackgroundColor(
+		static_cast<int>(
+			m_clearColor.x * 255.0f),
+		static_cast<int>(
+			m_clearColor.y * 255.0f),
+		static_cast<int>(
+			m_clearColor.z * 255.0f));
+}
+
+
+void DxRenderer::EndSceneDepthRender()
+{
+    // EN: Return to the back buffer temporarily.
+    //     Later the fullscreen volumetric pass will sample
+    //     m_sceneDepthHandle rather than display it directly.
+    //
+    // JP: 一旦 Back Buffer に戻す。
+    //     後の Fullscreen Volumetric Pass では
+    //     m_sceneDepthHandle を直接表示せず Sample する。
+    SetDrawScreen(DX_SCREEN_BACK);
+
+    // EN: Temporarily visualize the linear scene-depth texture
+    //     over the back buffer for validation.
+    //
+    // JP: Linear Scene Depth Texture を検証するため、
+    //     一時的に Back Buffer 全体へ可視化する。
+    DrawSceneDepthDebug(
+        m_sceneDepthWidth,
+        m_sceneDepthHeight);
+
+    /*DrawExtendGraph(
+        0,
+        0,
+        m_sceneDepthWidth,
+        m_sceneDepthHeight,
+        m_sceneDepthHandle,
+        FALSE);*/
+
+    /*SetDrawBlendMode(
+        m_sceneDepthPreviousBlendMode,
+        m_sceneDepthPreviousBlendParam);*/
+
+    m_skipSceneDepthDraw = false;
+}
+
+void DxRenderer::EnsureSceneDepthDebugShader()
+{
+    if (m_sceneDepthDebugPixelShaderHandle !=
+        InvalidHandle)
+    {
+        return;
+    }
+
+    // EN: Load the temporary pixel shader used to visualize
+    //     the linear scene-depth render target.
+    //
+    // JP: Linear Scene Depth Render Target を可視化するための
+    //     Temporary Pixel Shader を読み込む。
+    m_sceneDepthDebugPixelShaderHandle =
+        LoadPixelShader(
+            "Assets/Shaders/Source/SceneDepthDebugPS.pso");
+}
+
+void DxRenderer::DrawSceneDepthDebug(
+    int width,
+    int height)
+{
+    if (m_sceneDepthHandle == InvalidHandle ||
+        width <= 0 ||
+        height <= 0)
+    {
+        return;
+    }
+
+    EnsureSceneDepthDebugShader();
+
+    if (m_sceneDepthDebugPixelShaderHandle ==
+        InvalidHandle)
+    {
+        return;
+    }
+
+
+    VERTEX2DSHADER vertices[6]{};
+
+    const COLOR_U8 white =
+        GetColorU8(
+            255,
+            255,
+            255,
+            255);
+
+    const COLOR_U8 black =
+        GetColorU8(
+            0,
+            0,
+            0,
+            0);
+
+
+    const float left =
+        -0.5f;
+
+    const float top =
+        -0.5f;
+
+    const float right =
+        static_cast<float>(width) -
+        0.5f;
+
+    const float bottom =
+        static_cast<float>(height) -
+        0.5f;
+
+
+    auto setVertex =
+        [&](VERTEX2DSHADER& vertex,
+            float x,
+            float y,
+            float u,
+            float v)
+        {
+            vertex.pos =
+                VGet(
+                    x,
+                    y,
+                    0.0f);
+
+            vertex.rhw =
+                1.0f;
+
+            vertex.dif =
+                white;
+
+            vertex.spc =
+                black;
+
+            vertex.u = u;
+            vertex.v = v;
+
+            vertex.su = u;
+            vertex.sv = v;
+        };
+
+
+    // Triangle 1
+    setVertex(
+        vertices[0],
+        left,
+        top,
+        0.0f,
+        0.0f);
+
+    setVertex(
+        vertices[1],
+        right,
+        top,
+        1.0f,
+        0.0f);
+
+    setVertex(
+        vertices[2],
+        left,
+        bottom,
+        0.0f,
+        1.0f);
+
+
+    // Triangle 2
+    setVertex(
+        vertices[3],
+        left,
+        bottom,
+        0.0f,
+        1.0f);
+
+    setVertex(
+        vertices[4],
+        right,
+        top,
+        1.0f,
+        0.0f);
+
+    setVertex(
+        vertices[5],
+        right,
+        bottom,
+        1.0f,
+        1.0f);
+
+
+    // EN: Bind the scene depth-as-color render target as texture slot 0.
+    //
+    // JP: Scene Depth-as-Color Render Target を
+    //     Texture Slot 0 に Bind する。
+    SetUseTextureToShader(
+        0,
+        m_sceneDepthHandle);
+
+    SetUsePixelShader(
+        m_sceneDepthDebugPixelShaderHandle);
+
+
+    // EN: Render two screen-space triangles covering the
+    //     entire output surface.
+    //
+    // JP: Output Surface 全体を覆う
+    //     Screen Space Triangle を 2 枚描画する。
+    DrawPolygon2DToShader(
+        vertices,
+        2);
+
+
+    // EN: Clear temporary shader bindings so they do not leak
+    //     into later render operations.
+    //
+    // JP: 後続 Rendering に影響しないよう
+    //     Temporary Shader Binding を解除する。
+    SetUsePixelShader(-1);
+
+    SetUseTextureToShader(
+        0,
+        -1);
+}
+
+void DxRenderer::Shutdown()
+{
+    if (m_spotLightHandle != InvalidHandle)
+    {
+        DeleteLightHandle(
+            m_spotLightHandle);
+
+        m_spotLightHandle =
+            InvalidHandle;
+    }
+
+    if (m_lightingConstantBufferHandle != InvalidHandle)
+    {
+        DeleteShaderConstantBuffer(
+            m_lightingConstantBufferHandle);
+
+        m_lightingConstantBufferHandle =
+            InvalidHandle;
+    }
+
+    if (m_fogConstantBufferHandle != InvalidHandle)
+    {
+        DeleteShaderConstantBuffer(
+            m_fogConstantBufferHandle);
+
+        m_fogConstantBufferHandle =
+            InvalidHandle;
+    }
+
+    if (m_cameraConstantBufferHandle != InvalidHandle)
+    {
+        DeleteShaderConstantBuffer(
+            m_cameraConstantBufferHandle);
+
+        m_cameraConstantBufferHandle =
+            InvalidHandle;
+    }
+
+    if (m_volumetricConstantBufferHandle != InvalidHandle)
+    {
+        DeleteShaderConstantBuffer(
+            m_volumetricConstantBufferHandle);
+
+        m_volumetricConstantBufferHandle =
+            InvalidHandle;
+    }
+
+    if (m_sceneColorHandle != InvalidHandle)
+    {
+        DeleteGraph(
+            m_sceneColorHandle);
+
+        m_sceneColorHandle =
+            InvalidHandle;
+
+        m_sceneColorWidth = 0;
+        m_sceneColorHeight = 0;
+    }
+
+    if (m_sceneDepthHandle != InvalidHandle)
+    {
+        DeleteGraph(
+            m_sceneDepthHandle);
+
+        m_sceneDepthHandle =
+            InvalidHandle;
+
+        m_sceneDepthWidth = 0;
+        m_sceneDepthHeight = 0;
+    }
+
+    if (m_sceneDepthDebugPixelShaderHandle !=
+        InvalidHandle)
+    {
+        DeleteShader(
+            m_sceneDepthDebugPixelShaderHandle);
+
+        m_sceneDepthDebugPixelShaderHandle =
+            InvalidHandle;
+    }
+
+    // test
+    if (m_testRenderTargetHandle != InvalidHandle)
+    {
+        DeleteGraph(
+            m_testRenderTargetHandle);
+
+        m_testRenderTargetHandle =
+            InvalidHandle;
+    }
+}
+
+
+// test
+void DxRenderer::EnsureTestRenderTarget(
+    int width,
+    int height)
+{
+    if (width <= 0 ||
+        height <= 0)
+    {
+        return;
+    }
+
+    if (m_testRenderTargetHandle != InvalidHandle &&
+        m_testRenderTargetWidth == width &&
+        m_testRenderTargetHeight == height)
+    {
+        return;
+    }
+
+    if (m_testRenderTargetHandle != InvalidHandle)
+    {
+        DeleteGraph(
+            m_testRenderTargetHandle);
+
+        m_testRenderTargetHandle =
+            InvalidHandle;
+
+        m_testRenderTargetWidth = 0;
+        m_testRenderTargetHeight = 0;
+    }
+
+
+    // EN: Create a clean diagnostic render target using the same
+    //     creation path as the normal scene color target.
+    //
+    // JP: 通常の Scene Color Target と同じ作成方法で、
+    //     独立した診断用 Render Target を生成する。
+    m_testRenderTargetHandle =
+        MakeScreen(
+            width,
+            height,
+            TRUE);
+
+    if (m_testRenderTargetHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    m_testRenderTargetWidth =
+        width;
+
+    m_testRenderTargetHeight =
+        height;
 }

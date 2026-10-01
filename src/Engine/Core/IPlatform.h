@@ -1,5 +1,11 @@
 #pragma once
 
+struct ScreenSize
+{
+    int width = 0;
+    int height = 0;
+};
+
 class IPlatform
 {
 public:
@@ -12,4 +18,6 @@ public:
 
     virtual void BeginFrame() = 0;
     virtual void EndFrame() = 0;
+
+    virtual ScreenSize GetScreenSize() const = 0;
 };

@@ -20,4 +20,13 @@ public:
     //     すべての具体的なシーンが実装する必要がある。
     virtual void Update(float deltaTime) = 0;
     virtual void Render() = 0;
+
+    // EN: Renders only opaque geometry that contributes to
+    //     scene depth and volumetric occlusion.
+    //
+    // JP: Scene Depth と Volumetric Occlusion に寄与する
+    //     Opaque Geometry のみを描画する。
+    // EN: Scenes without opaque depth contributors may leave this pass empty.
+    // JP: 深度へ寄与する不透明物体がないシーンでは、このパスを省略できる。
+    virtual void RenderDepth() {}
 };

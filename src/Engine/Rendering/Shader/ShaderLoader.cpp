@@ -1,8 +1,8 @@
-#include "Engine/Rendering/ShaderLoader.h"
+#include "Engine/Rendering/Shader/ShaderLoader.h"
+#include "Engine/Rendering/Shader/IShaderResource.h"
+#include "Engine/Rendering/Shader/Shader.h"
 
-#include "Engine/Rendering/IShaderResource.h"
 #include "Engine/Rendering/Renderer.h"
-#include "Engine/Rendering/Shader.h"
 
 #include <utility>
 

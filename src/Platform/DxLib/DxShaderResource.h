@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Engine/Rendering/IShaderResource.h"
+#include "Engine/Rendering/Shader/IShaderResource.h"
 
 class DxShaderResource final
     : public IShaderResource

@@ -1,7 +1,6 @@
-#include "Engine/Rendering/Model.h"
-#include "Engine/Rendering/ModelImpl.h"
-
-#include "Engine/Rendering/IModelResource.h"
+#include "Engine/Rendering/Model/Model.h"
+#include "Engine/Rendering/Model/ModelImpl.h"
+#include "Engine/Rendering/Model/IModelResource.h"
 
 #include <memory>
 #include <utility>

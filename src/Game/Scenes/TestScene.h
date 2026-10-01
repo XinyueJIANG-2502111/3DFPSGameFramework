@@ -2,11 +2,11 @@
 
 #include "Engine/Scene/IScene.h"
 
-#include "Engine/Rendering/ModelInstance.h"
+#include "Engine/Rendering/Model/ModelInstance.h"
 #include "Engine/Rendering/Renderer.h"
 
-#include "Engine/Rendering/Camera.h"
-#include "Engine/Rendering/FPSCameraController.h"
+#include "Engine/Rendering/Camera/Camera.h"
+#include "Engine/Rendering/Camera/FPSCameraController.h"
 
 #include "Engine/Math/Transform.h"
 #include "Game/Player/FPSController.h"
@@ -21,7 +21,7 @@
 
 #include "Engine/Physics/Character/CharacterController.h"
 
-#include "Engine/Rendering/FogSettings.h"
+#include "Engine/Rendering/Fog/FogSettings.h"
 #include "Engine/Rendering/Lighting/SpotLight.h"
 #include "Engine/Rendering/Lighting/AmbientLight.h"
 
@@ -60,6 +60,7 @@ public:
 
     void Update(float deltaTime) override;
     void Render() override;
+    void RenderDepth() override;
 
 private:
     // EN: TestScene observes input through the engine abstraction rather
@@ -122,4 +123,8 @@ private:
     std::shared_ptr<Shader> m_testShader;
 
     VolumetricCone m_flashlightVolume;
+
+    std::shared_ptr<Shader> m_volumetricShader;
+
+    std::shared_ptr<Shader> m_sceneDepthShader;
 };

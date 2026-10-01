@@ -6,7 +6,7 @@
 class IModelResource;
 class ModelInstance;
 class IShaderResource;
-class ShaderVolumetricData;
+class Shader;
 
 struct Vector3;
 struct FogSettings;
@@ -14,6 +14,7 @@ struct AmbientLight;
 struct PointLight;
 struct SpotLight;
 struct VolumetricCone;
+struct ShaderVolumetricData;
 
 class IRendererBackend
 {
@@ -25,6 +26,10 @@ public:
 
     virtual void Draw(
         const ModelInstance& instance) = 0;
+
+    virtual void Draw(
+        const ModelInstance& instance,
+        const Shader& shader) = 0;
 
     virtual void SetFog(
         const FogSettings& settings) = 0;
@@ -54,12 +59,28 @@ public:
     virtual void SetVolumetricSettings(
         const ShaderVolumetricData& settings) = 0;
 
-    // EN: Draws a volumetric light cone using backend-specific rendering.
+    // EN: Draws a volumetric cone using an explicitly supplied shader.
+    //     The renderer borrows the shader for the duration of this draw call.
     //
-    // JP: Backend 固有の Rendering を使用して
-    //     Volumetric Light Cone を描画する。
+    // JP: 明示的に渡された Shader を使用して Volumetric Cone を描画する。
+    //     Renderer はこの Draw Call 中だけ Shader を借用する。
     virtual void DrawVolumetricCone(
-        const VolumetricCone& cone) = 0;
+        const VolumetricCone& cone,
+        const Shader& shader) = 0;
+
+    virtual void BeginSceneRender(
+        int width,
+        int height) = 0;
+
+    virtual void EndSceneRender(
+        int width,
+        int height) = 0;
+
+    virtual void BeginSceneDepthRender(
+        int width,
+        int height) = 0;
+
+    virtual void EndSceneDepthRender() = 0;
 
     //=============================================================================
     // shutdown
@@ -86,6 +107,10 @@ public:
     void Draw(
         const ModelInstance& instance);
 
+    void Draw(
+        const ModelInstance& instance,
+        const Shader& shader);
+
     void SetFog(
         const FogSettings& settings);
 
@@ -105,7 +130,23 @@ public:
         const Vector3& position);
 
     void SetVolumetricSettings(const ShaderVolumetricData& settings);
-    void DrawVolumetricCone(const VolumetricCone& cone);
+    void DrawVolumetricCone(
+        const VolumetricCone& cone,
+        const Shader& shader);
+
+    void BeginSceneRender(
+        int width,
+        int height);
+
+    void EndSceneRender(
+        int width,
+        int height);
+
+    void BeginSceneDepthRender(
+        int width,
+        int height);
+
+    void EndSceneDepthRender();
 
 private:
     IRendererBackend& m_backend;

@@ -80,3 +80,15 @@ struct ShaderLightingData
     ShaderAmbientLightData ambient;
     ShaderSpotLightData spotlight;
 };
+
+static_assert(
+    sizeof(ShaderAmbientLightData) == 16,
+    "ShaderAmbientLightData must match the HLSL constant-buffer layout.");
+
+static_assert(
+    sizeof(ShaderSpotLightData) == 64,
+    "ShaderSpotLightData must match the HLSL constant-buffer layout.");
+
+static_assert(
+    sizeof(ShaderLightingData) == 80,
+    "ShaderLightingData must match the HLSL constant-buffer layout.");

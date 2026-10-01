@@ -22,3 +22,7 @@ struct ShaderVolumetricData
     // JP: Œã‚Å Ray Marching ‚â Temporal ’²®‚Ég—p‚·‚é‚½‚ß‚Ì—\–ñ—ÌˆæB
     float padding = 0.0f;
 };
+
+static_assert(
+    sizeof(ShaderVolumetricData) == 16,
+    "ShaderVolumetricData must match the HLSL constant-buffer layout.");

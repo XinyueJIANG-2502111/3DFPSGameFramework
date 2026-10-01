@@ -1,7 +1,7 @@
 #include "Engine/Rendering/Renderer.h"
-#include "Engine/Rendering/ModelInstance.h"
+#include "Engine/Rendering/Model/ModelInstance.h"
 
-#include "Engine/Rendering/FogSettings.h"
+#include "Engine/Rendering/Fog/FogSettings.h"
 #include "Engine/Math/Vector3.h"
 
 #include "Engine/Rendering/Lighting/PointLight.h"
@@ -20,6 +20,15 @@ void Renderer::Draw(
     const ModelInstance& instance)
 {
     m_backend.Draw(instance);
+}
+
+void Renderer::Draw(
+    const ModelInstance& instance,
+    const Shader& shader)
+{
+    m_backend.Draw(
+        instance,
+        shader);
 }
 
 void Renderer::SetClearColor(
@@ -100,7 +109,42 @@ void Renderer::SetVolumetricSettings(
 }
 
 void Renderer::DrawVolumetricCone(
-    const VolumetricCone& cone)
+    const VolumetricCone& cone,
+    const Shader& shader)
 {
-    m_backend.DrawVolumetricCone(cone);
+    m_backend.DrawVolumetricCone(
+        cone,
+        shader);
+}
+
+void Renderer::BeginSceneRender(
+    int width,
+    int height)
+{
+    m_backend.BeginSceneRender(
+        width,
+        height);
+}
+
+void Renderer::EndSceneRender(
+    int width,
+    int height)
+{
+    m_backend.EndSceneRender(
+        width,
+        height);
+}
+
+void Renderer::BeginSceneDepthRender(
+    int width,
+    int height)
+{
+    m_backend.BeginSceneDepthRender(
+        width,
+        height);
+}
+
+void Renderer::EndSceneDepthRender()
+{
+    m_backend.EndSceneDepthRender();
 }

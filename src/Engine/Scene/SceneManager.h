@@ -23,6 +23,8 @@ public:
     void Update(float deltaTime);
     void Render();
 
+    void RenderDepth();
+
     void Shutdown();
 
 private:

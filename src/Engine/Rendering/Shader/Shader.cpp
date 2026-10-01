@@ -1,6 +1,5 @@
-#include "Engine/Rendering/Shader.h"
-
-#include "Engine/Rendering/ShaderImpl.h"
+#include "Engine/Rendering/Shader/Shader.h"
+#include "Engine/Rendering/Shader/ShaderImpl.h"
 
 #include <utility>
 

@@ -86,6 +86,10 @@ struct Vector3
     }
 };
 
+static_assert(
+    sizeof(Vector3) == 12,
+    "Vector3 must remain tightly packed as three floats.");
+
 constexpr Vector3 operator*(float scalar, const Vector3& v)
 {
     return v * scalar;
@@ -141,3 +145,4 @@ constexpr Vector3 Lerp(
 {
     return a + (b - a) * t;
 }
+

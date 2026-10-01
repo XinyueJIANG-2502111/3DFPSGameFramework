@@ -59,6 +59,14 @@ void SceneManager::Render()
     }
 }
 
+void SceneManager::RenderDepth()
+{
+    if (m_currentScene)
+    {
+        m_currentScene->RenderDepth();
+    }
+}
+
 void SceneManager::Shutdown()
 {
     // EN: Give the active scene a final lifecycle notification before

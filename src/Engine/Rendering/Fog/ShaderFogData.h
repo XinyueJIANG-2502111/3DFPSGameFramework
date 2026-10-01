@@ -36,3 +36,7 @@ struct ShaderFogData
 
     float padding = 0.0f;
 };
+
+static_assert(
+    sizeof(ShaderFogData) == 32,
+    "ShaderFogData must match the HLSL constant-buffer layout.");

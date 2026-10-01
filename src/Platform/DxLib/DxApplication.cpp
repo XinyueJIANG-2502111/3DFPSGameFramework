@@ -53,3 +53,20 @@ void DxApplication::EndFrame()
 {
     ScreenFlip();
 }
+
+ScreenSize DxApplication::GetScreenSize() const
+{
+    int width = 0;
+    int height = 0;
+    int colorBitDepth = 0;
+
+    GetScreenState(
+        &width,
+        &height,
+        &colorBitDepth);
+
+    return ScreenSize{
+        width,
+        height
+    };
+}

@@ -1,4 +1,4 @@
-#include "Engine/Rendering/Camera.h"
+#include "Engine/Rendering/Camera/Camera.h"
 
 Camera::Camera(
     float fieldOfViewRadians,

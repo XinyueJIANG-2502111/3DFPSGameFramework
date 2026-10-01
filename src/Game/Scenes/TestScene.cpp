@@ -3,12 +3,12 @@
 #include "Engine/Debug/IDebugText.h"
 #include "Engine/Input/IInput.h"
 #include "Engine/Physics/Collision/Intersection.h"
-#include "Engine/Rendering/ICameraBackend.h"
+#include "Engine/Rendering/Camera/ICameraBackend.h"
 
 #include "Engine/Resources/ResourceSystem.h"
 
-#include "Engine/Rendering/Model.h"
-#include "Engine/Rendering/Shader.h"
+#include "Engine/Rendering/Model/Model.h"
+#include "Engine/Rendering/Shader/Shader.h"
 #include "Engine/Rendering/Volumetric/ShaderVolumetricData.h"
 
 
@@ -124,6 +124,22 @@ void TestScene::OnEnter()
     assert(m_testShader != nullptr);
     assert(m_testShader->IsValid());
 
+    m_volumetricShader =
+        m_resourceSystem.LoadShader(
+            "Assets/Shaders/Source/VolumetricVS.vso",
+            "Assets/Shaders/Source/VolumetricPS.pso");
+
+    assert(m_volumetricShader != nullptr);
+    assert(m_volumetricShader->IsValid());
+
+    m_sceneDepthShader =
+        m_resourceSystem.LoadShader(
+            "Assets/Shaders/Source/BasicModelVS.vso",
+            "Assets/Shaders/Source/SceneDepthPS.pso");
+
+    assert(m_sceneDepthShader != nullptr);
+    assert(m_sceneDepthShader->IsValid());
+
     m_testModelInstance.SetShader(
         m_testShader);
 
@@ -157,7 +173,7 @@ void TestScene::OnEnter()
     // ------------------------------------------------------------
     m_testModel =
         m_resourceSystem.LoadModel(
-            "Assets/Models/Bicycle.mv1");
+            "Assets/Models/test/SimpleModel.mqo");
 
     assert(m_testModel != nullptr);
     assert(m_testModel->IsValid());
@@ -293,7 +309,7 @@ void TestScene::OnEnter()
 
     volumetric.enabled = 1.0f;
     volumetric.intensity = 1.0f;
-    volumetric.scattering = 0.05f;
+    volumetric.scattering = 0.35f;
 
     m_renderer.SetVolumetricSettings(
         volumetric);
@@ -405,6 +421,7 @@ void TestScene::OnExit()
 
     m_testModelInstance.SetShader(nullptr);
     m_testShader.reset();
+    m_sceneDepthShader.reset();
 
     ShaderVolumetricData volumetric{};
     volumetric.enabled = 0.0f;
@@ -665,33 +682,13 @@ void TestScene::Render()
         m_testModelInstance);
 
     // flashlight cone
-    m_renderer.DrawVolumetricCone(
-        m_flashlightVolume);
-
-    // ------------------------------------------------------------
-    // World Axes
-    // ------------------------------------------------------------
-
-    // EN: Engine coordinate convention:
-    //     +X = Right, +Y = Up, +Z = Forward.
-    //
-    // JP: Engine の座標規約：
-    //     +X = Right, +Y = Up, +Z = Forward。
-    /*DrawLine3D(
-        VGet(0.0f, 0.0f, 0.0f),
-        VGet(3.0f, 0.0f, 0.0f),
-        GetColor(255, 0, 0));
-
-    DrawLine3D(
-        VGet(0.0f, 0.0f, 0.0f),
-        VGet(0.0f, 3.0f, 0.0f),
-        GetColor(0, 255, 0));
-
-    DrawLine3D(
-        VGet(0.0f, 0.0f, 0.0f),
-        VGet(0.0f, 0.0f, 3.0f),
-        GetColor(0, 0, 255));*/
-
+    /*if (m_volumetricShader &&
+        m_volumetricShader->IsValid())
+    {
+        m_renderer.DrawVolumetricCone(
+            m_flashlightVolume,
+            *m_volumetricShader);
+    }*/
 
     // ------------------------------------------------------------
     // AABB Debug Rendering
@@ -721,7 +718,6 @@ void TestScene::Render()
     // ------------------------------------------------------------
     // Debug Text
     // ------------------------------------------------------------
-
     /*const float fps =
         m_deltaTime > 0.0f
         ? 1.0f / m_deltaTime
@@ -791,4 +787,30 @@ void TestScene::Render()
         120,
         penetrationText.c_str());*/
 
+}
+
+void TestScene::RenderDepth()
+{
+    if (!m_sceneDepthShader ||
+        !m_sceneDepthShader->IsValid())
+    {
+        return;
+    }
+
+
+    // EN: SetDrawScreen resets the camera when the depth target is bound.
+    //     Reapply the color-pass camera before drawing the same geometry.
+    //
+    // JP: 深度ターゲットへの切り替えでカメラ設定がリセットされるため、
+    //     同じ形状を描く前にカラーパスと同じカメラを再適用する。
+    m_cameraBackend.Apply(m_camera);
+
+    // EN: Depth pass draws only opaque geometry that should
+    //     block volumetric light.
+    //
+    // JP: Depth Pass では Volumetric Light を遮る
+    //     Opaque Geometry のみを描画する。
+    m_renderer.Draw(
+        m_testModelInstance,
+        *m_sceneDepthShader);
 }
