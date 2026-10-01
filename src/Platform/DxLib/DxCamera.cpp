@@ -56,15 +56,16 @@ void DxCamera::Apply(const Camera& camera)
     const VECTOR dxUp =
         ToDxVector(up);
 
-    SetCameraPositionAndTargetAndUpVec(
-        dxPosition,
-        dxTarget,
-        dxUp);
-
+    
     SetupCamera_Perspective(
         camera.GetFieldOfView());
 
     SetCameraNearFar(
         camera.GetNearPlane(),
         camera.GetFarPlane());
+
+    SetCameraPositionAndTargetAndUpVec(
+        dxPosition,
+        dxTarget,
+        dxUp);
 }

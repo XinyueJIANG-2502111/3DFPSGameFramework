@@ -102,6 +102,12 @@ void Renderer::SetCameraPosition(
     m_backend.SetCameraPosition(position);
 }
 
+void Renderer::SetCameraForward(
+    const Vector3& forward)
+{
+    m_backend.SetCameraForward(forward);
+}
+
 void Renderer::SetVolumetricSettings(
     const ShaderVolumetricData& settings)
 {

@@ -56,6 +56,12 @@ public:
     virtual void SetCameraPosition(
         const Vector3& position) = 0;
 
+    // EN: Updates the world-space camera forward direction for shaders.
+    //
+    // JP: Shader 用の World Space Camera Forward 方向を更新する。
+    virtual void SetCameraForward(
+        const Vector3& forward) = 0;
+
     virtual void SetVolumetricSettings(
         const ShaderVolumetricData& settings) = 0;
 
@@ -128,6 +134,9 @@ public:
 
     void SetCameraPosition(
         const Vector3& position);
+
+    void SetCameraForward(
+        const Vector3& forward);
 
     void SetVolumetricSettings(const ShaderVolumetricData& settings);
     void DrawVolumetricCone(

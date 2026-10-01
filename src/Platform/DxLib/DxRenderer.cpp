@@ -196,11 +196,11 @@ void DxRenderer::Draw(
         dxWorldMatrix);
 
 
-    // EN: Upload the current world-space camera position used
-    //     by the scene-depth pixel shader.
+    // EN: Upload the latest world-space camera data (position + forward)
+    //     used by the pass pixel shader (e.g. scene depth).
     //
-    // JP: Scene Depth Pixel Shader が使用する現在の
-    //     World Space Camera Position を GPU へ送る。
+    // JP: Pass Pixel Shader（Scene Depth 等）が使用する最新の
+    //     World Space Camera Data（Position + Forward）を GPU へ送る。
     UpdateCameraConstantBuffer();
 
 
@@ -680,6 +680,25 @@ void DxRenderer::SetCameraPosition(
 {
     m_cameraData.position =
         position;
+}
+
+void DxRenderer::SetCameraForward(
+    const Vector3& forward)
+{
+    // EN: Ensure the forward vector is normalized before storing.
+    //     A zero vector safely falls back to default forward (+Z).
+    //
+    // JP: 保存前に Forward ベクトルが正規化されていることを保証する。
+    //     長さ 0 の場合は安全のためデフォルトの前方向 (+Z) とする。
+    const float lengthSq = forward.LengthSquared();
+    if (lengthSq > 0.0f)
+    {
+        m_cameraData.forward = Normalize(forward);
+    }
+    else
+    {
+        m_cameraData.forward = Vector3{ 0.0f, 0.0f, 1.0f };
+    }
 }
 
 void DxRenderer::EnsureCameraConstantBuffer()

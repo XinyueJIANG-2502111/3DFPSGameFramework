@@ -134,7 +134,7 @@ void TestScene::OnEnter()
 
     m_sceneDepthShader =
         m_resourceSystem.LoadShader(
-            "Assets/Shaders/Source/BasicModelVS.vso",
+            "Assets/Shaders/Source/SceneDepthVS.vso",
             "Assets/Shaders/Source/SceneDepthPS.pso");
 
     assert(m_sceneDepthShader != nullptr);
@@ -504,6 +504,9 @@ void TestScene::Update(float deltaTime)
     m_renderer.SetCameraPosition(
         cameraTransform.position);
 
+    m_renderer.SetCameraForward(
+        m_camera.GetForward());
+
     m_flashlight.position =
         cameraTransform.position;
 
@@ -804,6 +807,17 @@ void TestScene::RenderDepth()
     // JP: 深度ターゲットへの切り替えでカメラ設定がリセットされるため、
     //     同じ形状を描く前にカラーパスと同じカメラを再適用する。
     m_cameraBackend.Apply(m_camera);
+
+    // EN: Ensure Renderer has the latest camera position and forward
+    //     before the depth pass draw.
+    //
+    // JP: Depth Pass 描画前に Renderer が最新の Camera Position と
+    //     Forward を保持していることを保証する。
+    m_renderer.SetCameraPosition(
+        m_camera.GetTransform().position);
+
+    m_renderer.SetCameraForward(
+        m_camera.GetForward());
 
     // EN: Depth pass draws only opaque geometry that should
     //     block volumetric light.

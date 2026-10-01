@@ -54,6 +54,9 @@ public:
     void SetCameraPosition(
         const Vector3& position) override;
 
+    void SetCameraForward(
+        const Vector3& forward) override;
+
     std::unique_ptr<IShaderResource> CreateShaderResource(
         const char* vertexShaderPath,
         const char* pixelShaderPath) override;
