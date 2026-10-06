@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <span>
+#include "Engine/Rendering/Billboard/BillboardRenderData.h"
 
 
 //=============================================================================
@@ -67,6 +69,15 @@ public:
 
     virtual void EndSceneDepthRender() = 0;
 
+    // EN: Executes the fullscreen volumetric-lighting composition pass
+    //     after scene color and linear scene depth are available.
+    //
+    // JP: Scene Color と Linear Scene Depth の生成後に、
+    //     Fullscreen Volumetric Lighting Composition Pass を実行する。
+    virtual void RenderVolumetricLighting(
+        int width,
+        int height) = 0;
+
 
     //-------------------------------------------------------------------------
     // Camera
@@ -120,6 +131,10 @@ public:
         const Shader& shader) = 0;
 
 
+    virtual void DrawBillboards(
+        std::span<const BillboardRenderData> billboards,
+        BillboardBlendMode blendMode) = 0;
+
     //-------------------------------------------------------------------------
     // Volumetric rendering
     //-------------------------------------------------------------------------
@@ -168,6 +183,13 @@ public:
         int height);
 
     void EndSceneDepthRender();
+
+    // EN: Runs the explicit fullscreen volumetric-lighting pass.
+    //
+    // JP: 明示的な Fullscreen Volumetric Lighting Pass を実行する。
+    void RenderVolumetricLighting(
+        int width,
+        int height);
 
 
     //-------------------------------------------------------------------------
@@ -229,6 +251,10 @@ public:
         const ModelInstance& instance,
         const Shader& shader);
 
+
+    void DrawBillboards(
+        std::span<const BillboardRenderData> billboards,
+        BillboardBlendMode blendMode);
 
     //-------------------------------------------------------------------------
     // Volumetric rendering

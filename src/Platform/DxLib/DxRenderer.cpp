@@ -1241,10 +1241,10 @@ void DxRenderer::DrawVolumetricCone(
         //
         // JP: Scene Depth との判定は行うが、
         //     半透明 Volume 自体は Depth Buffer に書き込まない。
-        SetUseZBuffer3D(
+        SetDepthTest(
             TRUE);
 
-        SetWriteZBuffer3D(
+        SetDepthWrite(
             FALSE);
 
 
@@ -1308,10 +1308,10 @@ void DxRenderer::DrawVolumetricCone(
         //
         // JP: 現在の Renderer では、この Pass 後の通常描画が
         //     Depth Test と Depth Write を使用する前提で戻す。
-        SetUseZBuffer3D(
+        SetDepthTest(
             TRUE);
 
-        SetWriteZBuffer3D(
+        SetDepthWrite(
             TRUE);
 }
 
@@ -1378,6 +1378,7 @@ void DxRenderer::BeginSceneRender(
     int width,
     int height)
 {
+    m_isSceneDepthPass = false;
     // EN: Aspect ratio belongs to the active render target.
     //     Cache it here so fullscreen shaders use the dimensions
     //     of the surface currently used for scene rendering.
@@ -1417,6 +1418,9 @@ void DxRenderer::BeginSceneRender(
         m_sceneColorHandle);
 
     ClearDrawScreen();
+    SetDepthTest(true);
+    SetDepthWrite(true);
+    SetLighting(true);
 }
 
 void DxRenderer::EndSceneRender(
@@ -1527,6 +1531,7 @@ void DxRenderer::BeginSceneDepthRender(
     int width,
     int height)
 {
+    m_isSceneDepthPass = true;
     m_skipSceneDepthDraw = true;
 
     EnsureSceneDepthRenderTarget(
@@ -1590,41 +1595,54 @@ void DxRenderer::BeginSceneDepthRender(
 
 void DxRenderer::EndSceneDepthRender()
 {
-    // EN: Return to the back buffer temporarily.
-    //     Later the fullscreen volumetric pass will sample
-    //     m_sceneDepthHandle rather than display it directly.
+    // EN: Finish only the linear scene-depth pass here.
+    //     Fullscreen volumetric composition is executed by its own
+    //     explicit render pass.
     //
-    // JP: 一旦 Back Buffer に戻す。
-    //     後の Fullscreen Volumetric Pass では
-    //     m_sceneDepthHandle を直接表示せず Sample する。
-    SetDrawScreen(DX_SCREEN_BACK);
+    // JP: ここでは Linear Scene Depth Pass の終了処理だけを行う。
+    //     Fullscreen Volumetric Composition は独立した
+    //     Render Pass として別途実行する。
+    m_isSceneDepthPass = false;
 
-    // EN: Temporarily visualize the linear scene-depth texture
-    //     over the back buffer for validation.
-    //
-    // JP: Linear Scene Depth Texture を検証するため、
-    //     一時的に Back Buffer 全体へ可視化する。
-    /*DrawSceneDepthDebug(
-        m_sceneDepthWidth,
-        m_sceneDepthHeight);*/
-
-    DrawCameraRayDebug(
-        m_sceneDepthWidth,
-        m_sceneDepthHeight);
-
-    /*DrawExtendGraph(
-        0,
-        0,
-        m_sceneDepthWidth,
-        m_sceneDepthHeight,
-        m_sceneDepthHandle,
-        FALSE);*/
-
-    /*SetDrawBlendMode(
-        m_sceneDepthPreviousBlendMode,
-        m_sceneDepthPreviousBlendParam);*/
+    SetDrawScreen(
+        DX_SCREEN_BACK);
 
     m_skipSceneDepthDraw = false;
+}
+
+void DxRenderer::RenderVolumetricLighting(
+    int width,
+    int height)
+{
+    // EN: Volumetric composition requires both the opaque scene color
+    //     and the linear scene-depth textures.
+    //
+    // JP: Volumetric Composition には Opaque Scene Color と
+    //     Linear Scene Depth の両方が必要となる。
+    if (width <= 0 ||
+        height <= 0 ||
+        m_sceneColorHandle == InvalidHandle ||
+        m_sceneDepthHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    // EN: The fullscreen shader performs scene-color plus volumetric
+    //     composition itself, therefore GPU additive blending must not
+    //     add the scene color a second time.
+    //
+    // JP: Fullscreen Shader 内で Scene Color と Volumetric Lighting を
+    //     合成するため、GPU 側で Additive Blend を重ねてはならない。
+    SetDrawScreen(
+        DX_SCREEN_BACK);
+
+    SetDrawBlendMode(
+        DX_BLENDMODE_NOBLEND,
+        0);
+
+    DrawCameraRayDebug(
+        width,
+        height);
 }
 
 void DxRenderer::EnsureSceneDepthDebugShader()

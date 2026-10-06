@@ -66,6 +66,10 @@ public:
 
     void EndSceneDepthRender() override;
 
+    void RenderVolumetricLighting(
+        int width,
+        int height) override;
+
 
     //-------------------------------------------------------------------------
     // Camera shader data
@@ -119,6 +123,10 @@ public:
         const Shader& shader) override;
 
 
+    void DrawBillboards(
+        std::span<const BillboardRenderData> billboards,
+        BillboardBlendMode blendMode) override;
+
     //-------------------------------------------------------------------------
     // Volumetric rendering
     //-------------------------------------------------------------------------
@@ -144,6 +152,14 @@ public:
 
 
 private:
+    bool m_isSceneDepthPass = false;
+    bool m_depthTest = false;
+    bool m_depthWrite = false;
+    bool m_lighting = true;
+    void SetDepthTest(bool enabled);
+    void SetDepthWrite(bool enabled);
+    void SetLighting(bool enabled);
+
     static constexpr int InvalidHandle =
         -1;
 

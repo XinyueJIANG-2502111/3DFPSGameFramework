@@ -2,6 +2,7 @@
 
 #include "Engine/Debug/IDebugText.h"
 #include "Engine/Input/IInput.h"
+#include "Engine/Effects/Particle/ParticleBurstEffect.h"
 #include "Engine/Physics/Collision/Intersection.h"
 #include "Engine/Rendering/Camera/ICameraBackend.h"
 
@@ -448,7 +449,7 @@ void TestScene::OnEnter()
     ShaderVolumetricData volumetric{};
 
     volumetric.enabled = 1.0f;
-    volumetric.intensity = 1.0f;
+    volumetric.intensity = 4.0f;
     volumetric.scattering = 0.35f;
 
     m_renderer.SetVolumetricSettings(
@@ -532,6 +533,7 @@ void TestScene::OnEnter()
 
 void TestScene::OnExit()
 {
+    m_visualEffects.Clear();
     m_collisionWorld.Clear();
 
     m_renderer.SetClearColor(
@@ -585,6 +587,7 @@ void TestScene::OnExit()
 void TestScene::Update(float deltaTime)
 {
     m_deltaTime = deltaTime;
+    m_visualEffects.Update(deltaTime);
 
 
     // ------------------------------------------------------------
@@ -646,6 +649,18 @@ void TestScene::Update(float deltaTime)
     m_camera.GetTransform().position =
         m_playerTransform.position +
         eyeOffset;
+
+    // EN: Pressed is the input edge, so holding Space creates only one burst.
+    //     Spawn after camera follow so the effect uses this frame's position.
+    // JP: Pressed は押下の立ち上がりなので、Space を保持しても Burst は一つだけ。
+    //     Camera Follow 後に生成し、今フレームの位置を使用する。
+    if (m_input.IsKeyPressed(KeyCode::Space))
+    {
+        ParticleBurstDesc burst;
+        burst.position = m_camera.GetTransform().position + m_camera.GetForward() * 3.0f;
+        burst.direction = -m_camera.GetForward();
+        m_visualEffects.Add(std::make_unique<ParticleBurstEffect>(burst));
+    }
 
     // ------------------------------------------------------------
     // spotlight update
@@ -831,6 +846,10 @@ void TestScene::Render()
     m_renderer.Draw(
         m_rightWallInstance);
 
+    m_renderer.SetCameraRight(m_camera.GetRight());
+    m_renderer.SetCameraUp(m_camera.GetUp());
+    m_visualEffects.Render(m_renderer);
+
     // flashlight cone
     /*if (m_volumetricShader &&
         m_volumetricShader->IsValid())
@@ -941,6 +960,8 @@ void TestScene::Render()
 
 void TestScene::RenderDepth()
 {
+    // EN: Transparent VFX must not truncate volumetric rays like opaque walls.
+    // JP: 透明 VFX は不透明な壁のように Volumetric Ray を遮断してはならない。
     if (!m_sceneDepthShader ||
         !m_sceneDepthShader->IsValid())
     {

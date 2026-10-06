@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Engine/Effects/VisualEffectSystem.h"
+
 #include "Engine/Scene/IScene.h"
 
 #include "Engine/Rendering/Model/ModelInstance.h"
@@ -106,6 +108,10 @@ private:
     std::shared_ptr<Model> m_testModel;
 
     Renderer m_renderer;
+
+    // EN: Scene ownership bounds VFX lifetime to this world's lifetime.
+    // JP: Scene ‚ÌŠ—LŒ ‚É‚æ‚Á‚Ä VFX ‚Ìõ–½‚ğ‚±‚Ì World ‚Ìõ–½“à‚ÉŒÀ’è‚·‚éB
+    VisualEffectSystem m_visualEffects;
     ModelInstance m_testModelInstance;
 
     // EN: Shared unit-cube resource used to build simple static test-room

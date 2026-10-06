@@ -180,6 +180,19 @@ void Application::Render()
 
     m_rendererBackend.EndSceneDepthRender();
 
+    // ------------------------------------------------------------
+    // Volumetric lighting pass
+    // ------------------------------------------------------------
+    
+    // EN: Compose volumetric lighting only after both scene color and
+    //     linear scene depth have been produced.
+    //
+    // JP: Scene Color と Linear Scene Depth の両方が完成した後にのみ、
+    //     Volumetric Lighting を合成する。
+    m_rendererBackend.RenderVolumetricLighting(
+        size.width,
+        size.height);
+
 
     m_platform.EndFrame();
 }

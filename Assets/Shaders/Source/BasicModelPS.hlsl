@@ -161,6 +161,31 @@ PS_OUTPUT main(PS_INPUT input)
             distanceAttenuation *=
                 distanceAttenuation;
 
+            // EN: Share the volumetric light's range-scaled softened inverse-square
+            //     falloff. It stays finite at the source and reaches half strength
+            //     at the configured range before the separate range fade reaches zero.
+            //
+            // JP: Volumetric Light と同じ Range 基準の Softened Inverse-Square
+            //     Falloff を使う。光源位置でも有限となり、Range で半分になる。
+            //     その後、別の Range Fade が終端で 0 にする。
+            const float safeSpotlightRange =
+                max(
+                    g_SpotLight.Range,
+                    0.0001f);
+
+            const float normalizedLightDistance =
+                distanceToLight /
+                safeSpotlightRange;
+
+            const float inverseSquareAttenuation =
+                1.0f /
+                (1.0f +
+                    normalizedLightDistance *
+                    normalizedLightDistance);
+
+            distanceAttenuation *=
+                inverseSquareAttenuation;
+
             const float3 lightToSurface =
                 -lightDirection;
 

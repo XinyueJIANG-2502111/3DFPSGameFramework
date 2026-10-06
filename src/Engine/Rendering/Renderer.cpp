@@ -60,6 +60,15 @@ void Renderer::EndSceneDepthRender()
     m_backend.EndSceneDepthRender();
 }
 
+void Renderer::RenderVolumetricLighting(
+    int width,
+    int height)
+{
+    m_backend.RenderVolumetricLighting(
+        width,
+        height);
+}
+
 
 //=============================================================================
 // Camera shader data
@@ -236,4 +245,12 @@ void Renderer::DrawVolumetricCone(
     m_backend.DrawVolumetricCone(
         cone,
         shader);
+}
+
+
+void Renderer::DrawBillboards(
+    std::span<const BillboardRenderData> billboards,
+    BillboardBlendMode blendMode)
+{
+    m_backend.DrawBillboards(billboards, blendMode);
 }

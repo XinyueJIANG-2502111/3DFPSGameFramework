@@ -456,13 +456,13 @@ float4 main(
     // Raymarch setup
     //-------------------------------------------------------------------------
 
-    // EN: Fixed low sample count for the first physically separated
-    //     single-scattering implementation.
+    // EN: Intermediate sample count for comparing banding and GPU cost
+    //     after the raymarch math and attenuation are stable.
     //
-    // JP: Light と Medium を分離した最初の Single-Scattering 実装では、
-    //     固定の少数 Sample を使用する。
+    // JP: Raymarch 数学と Attenuation の確認後、Banding と GPU Cost を
+    //     比較するための中間 Sample Count。
     const int SampleCount =
-        8;
+        16;
 
 
     const float stepLength =
@@ -569,39 +569,97 @@ float4 main(
                 coneFeatherRange);
 
 
+        // EN: Apply a weak forward-biased Henyey-Greenstein phase response.
+        //     The cosine compares incoming light travel with scattered travel
+        //     toward the camera; normalization preserves isotropic average energy.
+        //
+        // JP: 弱い Forward-Biased Henyey-Greenstein Phase Response を適用する。
+        //     Light の入射方向と Camera への散乱方向を比較し、
+        //     Isotropic Average Energy を保つ比率で計算する。
+        const float phaseAnisotropy =
+            0.2f;
+
+        const float phaseCosine =
+            dot(
+                sampleLightDirection,
+                -worldRay);
+
+        const float phaseDenominator =
+            max(
+                1.0f +
+                    phaseAnisotropy *
+                    phaseAnisotropy -
+                    2.0f *
+                    phaseAnisotropy *
+                    phaseCosine,
+                0.0001f);
+
+        const float phaseFunctionFactor =
+            (1.0f -
+                phaseAnisotropy *
+                phaseAnisotropy) /
+            pow(
+                phaseDenominator,
+                1.5f);
+
+
         //-------------------------------------------------------------------------
-        // Spotlight range attenuation
+        // Spotlight distance attenuation
         //-------------------------------------------------------------------------
 
-        // EN: Normalize the distance from spotlight to sample over
-        //     the finite flashlight range.
+        // EN: Normalize sample distance over the finite spotlight range.
         //
-        // JP: Spotlight から Sample までの距離を
-        //    有限 Flashlight Range で正規化する。
-        const float normalizedBeamDistance =
+        // JP: Sample 距離を有限 Spotlight Range で正規化する。
+        const float safeLightRange =
+            max(
+                g_SpotLight.Range,
+                0.0001f);
+
+        const float normalizedLightDistance =
             saturate(
                 sampleLightDistance /
-                max(
-                    g_SpotLight.Range,
-                    0.0001f));
+                safeLightRange);
 
 
-        // EN: V1 geometric range fade.
+        // EN: Soften inverse-square falloff near the source while retaining
+        //     inverse-square behavior at distances well beyond the softening radius.
         //
-        //     This is still not a physical inverse-square falloff.
-        //     It only provides a smooth finite-range attenuation.
+        // JP: 光源近傍の Inverse-Square Falloff を Softening しつつ、
+        //     Radius より十分遠方では Inverse-Square の挙動を保つ。
+        const float attenuationSofteningDistance =
+            0.5f;
+
+        const float softeningDistanceSquared =
+            attenuationSofteningDistance *
+            attenuationSofteningDistance;
+
+        const float distanceSquared =
+            sampleLightDistance *
+            sampleLightDistance;
+
+        const float inverseSquareFactor =
+            softeningDistanceSquared /
+            (distanceSquared +
+                softeningDistanceSquared);
+
+
+        // EN: Smoothly fade the light to zero as the sample approaches Range.
         //
-        // JP: V1 の Geometric Range Fade。
-        //
-        //     まだ物理的な Inverse-Square Falloff ではなく、
-        //     有限 Range を滑らかに減衰させるための係数。
-        float beamDistanceFactor =
+        // JP: Sample が Range に近づくにつれて Light を滑らかに 0 へ減衰する。
+        float rangeCutoff =
             1.0f -
-            normalizedBeamDistance;
+            normalizedLightDistance;
+
+        rangeCutoff *=
+            rangeCutoff;
 
 
-        beamDistanceFactor *=
-            beamDistanceFactor;
+        // EN: Keep geometric attenuation separate from cone and medium terms.
+        //
+        // JP: 幾何学的 Attenuation を Cone / Medium 項から分離して保つ。
+        const float beamDistanceFactor =
+            inverseSquareFactor *
+            rangeCutoff;
 
 
         //-------------------------------------------------------------------------
@@ -629,6 +687,7 @@ float4 main(
         const float sampleLightFactor =
             sampleConeFactor *
             beamDistanceFactor *
+            phaseFunctionFactor *
             lightTransmittance;
 
 

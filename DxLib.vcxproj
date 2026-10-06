@@ -76,6 +76,8 @@
     <ClInclude Include="src\Platform\DxLib\DxShaderResource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Engine\Effects\Particle\ParticleBurstEffect.cpp" />
+    <ClCompile Include="src\Engine\Effects\VisualEffectSystem.cpp" />
     <ClCompile Include="src\Engine\Core\Application.cpp" />
     <ClCompile Include="src\Engine\Core\Time.cpp" />
     <ClCompile Include="src\Engine\Input\InputMap.cpp" />
@@ -109,7 +111,9 @@
     <ClCompile Include="src\Platform\DxLib\DxModelResource.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxModelTest.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxRenderer.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxBillboardRenderer.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxShaderResource.cpp" />
+    <ClCompile Include="tests\VisualEffectTests.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -235,4 +239,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Engine\Rendering\Billboard\BillboardRenderData.h" />
+    <ClInclude Include="src\Engine\Effects\IVisualEffect.h" />
+    <ClInclude Include="src\Engine\Effects\VisualEffectSystem.h" />
+    <ClInclude Include="src\Engine\Effects\Particle\Particle.h" />
+    <ClInclude Include="src\Engine\Effects\Particle\ParticleBurstEffect.h" />
+  </ItemGroup>
 </Project>

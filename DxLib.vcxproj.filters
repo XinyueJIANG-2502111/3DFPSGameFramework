@@ -358,5 +358,39 @@
     <ClCompile Include="src\Engine\Rendering\Shader\ShaderResourceAccess.cpp">
       <Filter>02-Engine\4-Rendering\Shader</Filter>
     </ClCompile>
+    <ClCompile Include="tests\VisualEffectTests.cpp">
+      <Filter>02-Engine\0-Test</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Engine\Rendering\Billboard\BillboardRenderData.h">
+      <Filter>02-Engine\4-Rendering\Billboard</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Effects\IVisualEffect.h">
+      <Filter>02-Engine\6-Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Effects\VisualEffectSystem.h">
+      <Filter>02-Engine\6-Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Effects\Particle\Particle.h">
+      <Filter>02-Engine\6-Effects\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Effects\Particle\ParticleBurstEffect.h">
+      <Filter>02-Engine\6-Effects\Particle</Filter>
+    </ClInclude>
+    <ClCompile Include="src\Engine\Effects\VisualEffectSystem.cpp">
+      <Filter>02-Engine\6-Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Effects\Particle\ParticleBurstEffect.cpp">
+      <Filter>02-Engine\6-Effects\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\DxLib\DxBillboardRenderer.cpp">
+      <Filter>01-Platform\A-DxLib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="02-Engine\6-Effects" />
+    <Filter Include="02-Engine\6-Effects\Particle" />
+    <Filter Include="02-Engine\4-Rendering\Billboard" />
   </ItemGroup>
 </Project>
