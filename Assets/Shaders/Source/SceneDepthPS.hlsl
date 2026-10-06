@@ -6,9 +6,15 @@ struct PS_INPUT
 struct ShaderCameraData
 {
     float3 Position;
-    float Padding0;
+    float TanHalfFovY;
 
     float3 Forward;
+    float AspectRatio;
+
+    float3 Right;
+    float Padding0;
+
+    float3 Up;
     float Padding1;
 };
 

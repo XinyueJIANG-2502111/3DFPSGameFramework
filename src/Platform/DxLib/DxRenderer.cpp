@@ -701,6 +701,67 @@ void DxRenderer::SetCameraForward(
     }
 }
 
+void DxRenderer::SetCameraRight(
+    const Vector3& right)
+{
+    // EN: Store a normalized world-space camera-right vector.
+    //     A zero-length vector falls back to the Engine +X axis.
+    //
+    // JP: 正規化された World-Space Camera Right Vector を保持する。
+    //     長さ 0 の場合は Engine の +X Axis を使用する。
+    if (right.LengthSquared() > 0.000001f)
+    {
+        m_cameraData.right =
+            Normalize(right);
+    }
+    else
+    {
+        m_cameraData.right =
+            Vector3{
+                1.0f,
+                0.0f,
+                0.0f
+        };
+    }
+}
+
+void DxRenderer::SetCameraUp(
+    const Vector3& up)
+{
+    // EN: Store a normalized world-space camera-up vector.
+    //     A zero-length vector falls back to the Engine +Y axis.
+    //
+    // JP: 正規化された World-Space Camera Up Vector を保持する。
+    //     長さ 0 の場合は Engine の +Y Axis を使用する。
+    if (up.LengthSquared() > 0.000001f)
+    {
+        m_cameraData.up =
+            Normalize(up);
+    }
+    else
+    {
+        m_cameraData.up =
+            Vector3{
+                0.0f,
+                1.0f,
+                0.0f
+        };
+    }
+}
+
+void DxRenderer::SetCameraFieldOfView(
+    float verticalFovRadians)
+{
+    // EN: Cache the vertical projection scale required by
+    //     fullscreen camera-ray reconstruction.
+    //
+    // JP: Fullscreen Camera-Ray Reconstruction に必要な
+    //     Vertical Projection Scale を保持する。
+    m_cameraData.tanHalfFovY =
+        std::tan(
+            verticalFovRadians * 0.5f);
+}
+
 void DxRenderer::EnsureCameraConstantBuffer()
 {
     if (m_cameraConstantBufferHandle != InvalidHandle)
@@ -1317,6 +1378,25 @@ void DxRenderer::BeginSceneRender(
     int width,
     int height)
 {
+    // EN: Aspect ratio belongs to the active render target.
+    //     Cache it here so fullscreen shaders use the dimensions
+    //     of the surface currently used for scene rendering.
+    //
+    // JP: Aspect Ratio は Active Render Target に属する値なので、
+    //     Scene Rendering に使用する Surface Size からここで計算する。
+    if (height > 0)
+    {
+        m_cameraData.aspectRatio =
+            static_cast<float>(width) /
+            static_cast<float>(height);
+    }
+    else
+    {
+        m_cameraData.aspectRatio =
+            1.0f;
+    }
+
+
     EnsureSceneRenderTarget(
         width,
         height);
@@ -1326,7 +1406,8 @@ void DxRenderer::BeginSceneRender(
         height);
 
 
-    if (m_sceneColorHandle == InvalidHandle)
+    if (m_sceneColorHandle ==
+        InvalidHandle)
     {
         return;
     }
@@ -1442,65 +1523,6 @@ void DxRenderer::EnsureSceneDepthRenderTarget(
         height;
 }
 
-//void DxRenderer::BeginSceneDepthRender(
-//    int width,
-//    int height)
-//{
-//    m_skipSceneDepthDraw = true;
-//
-//    GetDrawBlendMode(
-//        &m_sceneDepthPreviousBlendMode,
-//        &m_sceneDepthPreviousBlendParam);
-//
-//    if (width <= 0 ||
-//        height <= 0)
-//    {
-//        return;
-//    }
-//
-//    EnsureSceneDepthRenderTarget(
-//        width,
-//        height);
-//
-//    if (m_sceneDepthHandle == InvalidHandle)
-//    {
-//        return;
-//    }
-//
-//    if (SetDrawScreen(
-//        m_sceneDepthHandle) == -1)
-//    {
-//        return;
-//    }
-//
-//    m_skipSceneDepthDraw = false;
-//
-//    SetDrawBlendMode(
-//        DX_BLENDMODE_NOBLEND,
-//        0);
-//
-//
-//     EN: Zero represents "no opaque surface" in the
-//         depth-as-color render target.
-//    
-//     JP: Depth-as-Color Render Target では 0 を
-//         「Opaque Surface が存在しない」値として使用する。
-//    SetBackgroundColor(
-//        255,
-//        0,
-//        0);
-//
-//    ClearDrawScreen();
-//
-//    SetBackgroundColor(
-//        static_cast<int>(
-//            m_clearColor.x * 255.0f),
-//        static_cast<int>(
-//            m_clearColor.y * 255.0f),
-//        static_cast<int>(
-//            m_clearColor.z * 255.0f));
-//
-//}
 void DxRenderer::BeginSceneDepthRender(
     int width,
     int height)
@@ -1566,7 +1588,6 @@ void DxRenderer::BeginSceneDepthRender(
 			m_clearColor.z * 255.0f));
 }
 
-
 void DxRenderer::EndSceneDepthRender()
 {
     // EN: Return to the back buffer temporarily.
@@ -1583,7 +1604,11 @@ void DxRenderer::EndSceneDepthRender()
     //
     // JP: Linear Scene Depth Texture を検証するため、
     //     一時的に Back Buffer 全体へ可視化する。
-    DrawSceneDepthDebug(
+    /*DrawSceneDepthDebug(
+        m_sceneDepthWidth,
+        m_sceneDepthHeight);*/
+
+    DrawCameraRayDebug(
         m_sceneDepthWidth,
         m_sceneDepthHeight);
 
@@ -1782,6 +1807,206 @@ void DxRenderer::DrawSceneDepthDebug(
         -1);
 }
 
+void DxRenderer::EnsureCameraRayDebugShader()
+{
+    if (m_cameraRayDebugPixelShaderHandle !=
+        InvalidHandle)
+    {
+        return;
+    }
+
+    // EN: Load the temporary fullscreen shader used to
+    //     validate screen-space ray coordinates.
+    //
+    // JP: Screen-Space Ray Coordinate を検証するための
+    //     Temporary Fullscreen Shader を読み込む。
+    m_cameraRayDebugPixelShaderHandle =
+        LoadPixelShader(
+            "Assets/Shaders/Source/CameraRayDebugPS.pso");
+}
+
+void DxRenderer::DrawCameraRayDebug(
+    int width,
+    int height)
+{
+    if (width <= 0 ||
+        height <= 0)
+    {
+        return;
+    }
+
+    EnsureCameraRayDebugShader();
+
+    if (m_cameraRayDebugPixelShaderHandle ==
+        InvalidHandle)
+    {
+        return;
+    }
+
+
+    VERTEX2DSHADER vertices[6]{};
+
+    const COLOR_U8 white =
+        GetColorU8(
+            255,
+            255,
+            255,
+            255);
+
+    const COLOR_U8 black =
+        GetColorU8(
+            0,
+            0,
+            0,
+            0);
+
+
+    const float left =
+        -0.5f;
+
+    const float top =
+        -0.5f;
+
+    const float right =
+        static_cast<float>(width) -
+        0.5f;
+
+    const float bottom =
+        static_cast<float>(height) -
+        0.5f;
+
+
+    auto setVertex =
+        [&](VERTEX2DSHADER& vertex,
+            float x,
+            float y,
+            float u,
+            float v)
+        {
+            vertex.pos =
+                VGet(
+                    x,
+                    y,
+                    0.0f);
+
+            vertex.rhw =
+                1.0f;
+
+            vertex.dif =
+                white;
+
+            vertex.spc =
+                black;
+
+            vertex.u = u;
+            vertex.v = v;
+
+            vertex.su = u;
+            vertex.sv = v;
+        };
+
+
+    setVertex(
+        vertices[0],
+        left,
+        top,
+        0.0f,
+        0.0f);
+
+    setVertex(
+        vertices[1],
+        right,
+        top,
+        1.0f,
+        0.0f);
+
+    setVertex(
+        vertices[2],
+        left,
+        bottom,
+        0.0f,
+        1.0f);
+
+
+    setVertex(
+        vertices[3],
+        left,
+        bottom,
+        0.0f,
+        1.0f);
+
+    setVertex(
+        vertices[4],
+        right,
+        top,
+        1.0f,
+        0.0f);
+
+    setVertex(
+        vertices[5],
+        right,
+        bottom,
+        1.0f,
+        1.0f);
+
+
+    // EN: Upload the latest camera and projection parameters before
+    //     the fullscreen shader reconstructs camera-space rays.
+    //
+    // JP: Fullscreen Shader が Camera-Space Ray を再構築する前に、
+    //     最新の Camera / Projection Parameter を GPU へ反映する。
+    UpdateCameraConstantBuffer();
+
+
+    // EN: Upload the current lighting state so the fullscreen
+    //     debug pass can access the spotlight cone parameters.
+    //
+    // JP: Fullscreen Debug Pass から Spotlight Cone Parameter を
+    //     参照できるよう、現在の Lighting State を GPU へ反映する。
+    UpdateLightingConstantBuffer();
+
+    // EN: Upload volumetric parameters used by the fullscreen
+    //     analytical scattering debug pass.
+    //
+    // JP: Fullscreen Analytical Scattering Debug Pass で使用する
+    //     Volumetric Parameter を GPU へ反映する。
+    UpdateVolumetricConstantBuffer();
+
+
+    // EN: Bind the linear scene-depth render target so the fullscreen
+    //     shader can convert view depth into ray distance.
+    //
+    // JP: View Depth を Ray Distance に変換できるよう、
+    //     Linear Scene Depth Render Target を Fullscreen Shader に Bind する。
+    SetUseTextureToShader(
+        0,
+        m_sceneDepthHandle);
+
+    // EN: Bind the normal scene-color render target for final
+    //     fullscreen volumetric composition.
+    //
+    // JP: 最終的な Fullscreen Volumetric Composition のために、
+    //     通常の Scene Color Render Target を Bind する。
+    SetUseTextureToShader(
+        1,
+        m_sceneColorHandle);
+
+    SetUsePixelShader(
+        m_cameraRayDebugPixelShaderHandle);
+
+    DrawPolygon2DToShader(
+        vertices,
+        2);
+
+    SetUsePixelShader(-1);
+    SetUseTextureToShader(
+        0,
+        -1);
+    SetUseTextureToShader(
+        1,
+        -1);
+}
+
 void DxRenderer::Shutdown()
 {
     if (m_spotLightHandle != InvalidHandle)
@@ -1863,68 +2088,13 @@ void DxRenderer::Shutdown()
             InvalidHandle;
     }
 
-    // test
-    if (m_testRenderTargetHandle != InvalidHandle)
+    if (m_cameraRayDebugPixelShaderHandle !=
+        InvalidHandle)
     {
-        DeleteGraph(
-            m_testRenderTargetHandle);
+        DeleteShader(
+            m_cameraRayDebugPixelShaderHandle);
 
-        m_testRenderTargetHandle =
+        m_cameraRayDebugPixelShaderHandle =
             InvalidHandle;
     }
-}
-
-
-// test
-void DxRenderer::EnsureTestRenderTarget(
-    int width,
-    int height)
-{
-    if (width <= 0 ||
-        height <= 0)
-    {
-        return;
-    }
-
-    if (m_testRenderTargetHandle != InvalidHandle &&
-        m_testRenderTargetWidth == width &&
-        m_testRenderTargetHeight == height)
-    {
-        return;
-    }
-
-    if (m_testRenderTargetHandle != InvalidHandle)
-    {
-        DeleteGraph(
-            m_testRenderTargetHandle);
-
-        m_testRenderTargetHandle =
-            InvalidHandle;
-
-        m_testRenderTargetWidth = 0;
-        m_testRenderTargetHeight = 0;
-    }
-
-
-    // EN: Create a clean diagnostic render target using the same
-    //     creation path as the normal scene color target.
-    //
-    // JP: 通常の Scene Color Target と同じ作成方法で、
-    //     独立した診断用 Render Target を生成する。
-    m_testRenderTargetHandle =
-        MakeScreen(
-            width,
-            height,
-            TRUE);
-
-    if (m_testRenderTargetHandle == InvalidHandle)
-    {
-        return;
-    }
-
-    m_testRenderTargetWidth =
-        width;
-
-    m_testRenderTargetHeight =
-        height;
 }

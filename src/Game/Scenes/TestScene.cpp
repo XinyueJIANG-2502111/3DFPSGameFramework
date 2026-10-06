@@ -171,9 +171,13 @@ void TestScene::OnEnter()
     // ------------------------------------------------------------
     // Test Model
     // ------------------------------------------------------------
+    /*m_testModel =
+        m_resourceSystem.LoadModel(
+            "Assets/Models/test/SimpleModel.mqo");*/
+
     m_testModel =
         m_resourceSystem.LoadModel(
-            "Assets/Models/test/SimpleModel.mqo");
+            "Assets/Models/bicycle.mv1");
 
     assert(m_testModel != nullptr);
     assert(m_testModel->IsValid());
@@ -190,7 +194,7 @@ void TestScene::OnEnter()
     transform.position =
         Vector3{
             0.0f,
-            0.0f,
+            2.0f,
             5.0f
     };
 
@@ -208,6 +212,142 @@ void TestScene::OnEnter()
             0.02f,
             0.02f
         };
+
+	// ------------------------------------------------------------
+    // Test Room Geometry
+    // ------------------------------------------------------------
+    
+    // EN: Load one unit cube and reuse it for the floor and walls.
+    //     Each ModelInstance owns only its transform/state while sharing
+    //     the same immutable model resource.
+    //
+    // JP: Unit Cube を 1 回だけ Load し、Floor と Wall で共有する。
+    //     各 ModelInstance は Transform / State のみを保持し、
+    //     同一の Model Resource を共有する。
+    m_testCubeModel =
+        m_resourceSystem.LoadModel(
+            "Assets/Models/TestCube.mqo");
+
+    assert(m_testCubeModel != nullptr);
+    assert(m_testCubeModel->IsValid());
+
+    m_floorInstance.SetModel(
+        m_testCubeModel);
+
+    m_backWallInstance.SetModel(
+        m_testCubeModel);
+
+    m_leftWallInstance.SetModel(
+        m_testCubeModel);
+
+    m_rightWallInstance.SetModel(
+        m_testCubeModel);
+
+
+    m_floorInstance.SetShader(
+        m_testShader);
+
+    m_backWallInstance.SetShader(
+        m_testShader);
+
+    m_leftWallInstance.SetShader(
+        m_testShader);
+
+    m_rightWallInstance.SetShader(
+        m_testShader);
+
+    {
+        Transform& transform =
+            m_floorInstance.GetTransform();
+
+        // EN: Thin unit cube scaled into a floor covering the
+        //     current flashlight test area.
+        //
+        // JP: Unit Cube を薄く引き伸ばし、現在の Flashlight Test Area を
+        //     覆う Floor として使用する。
+        transform.position =
+            Vector3{
+                0.0f,
+                -0.05f,
+                2.0f
+        };
+
+        transform.rotation =
+            Quaternion{};
+
+        transform.scale =
+            Vector3{
+                12.0f,
+                0.1f,
+                16.0f
+        };
+    }
+
+    {
+        Transform& transform =
+            m_backWallInstance.GetTransform();
+
+        transform.position =
+            Vector3{
+                0.0f,
+                2.5f,
+                9.95f
+        };
+
+        transform.rotation =
+            Quaternion{};
+
+        transform.scale =
+            Vector3{
+                12.0f,
+                5.0f,
+                0.1f
+        };
+    }
+
+    {
+        Transform& transform =
+            m_leftWallInstance.GetTransform();
+
+        transform.position =
+            Vector3{
+                -5.95f,
+                2.5f,
+                2.0f
+        };
+
+        transform.rotation =
+            Quaternion{};
+
+        transform.scale =
+            Vector3{
+                0.1f,
+                5.0f,
+                16.0f
+        };
+    }
+
+    {
+        Transform& transform =
+            m_rightWallInstance.GetTransform();
+
+        transform.position =
+            Vector3{
+                5.95f,
+                2.5f,
+                2.0f
+        };
+
+        transform.rotation =
+            Quaternion{};
+
+        transform.scale =
+            Vector3{
+                0.1f,
+                5.0f,
+                16.0f
+        };
+    }
 
 
     // ------------------------------------------------------------
@@ -375,7 +515,7 @@ void TestScene::OnEnter()
 
     m_flashlight.color =
         Vector3{
-            1.0f,
+            1.00f,
             0.95f,
             0.85f
     };
@@ -408,6 +548,18 @@ void TestScene::OnExit()
     //     Scene が保持する Resource Reference を解放する。
     m_testModelInstance.SetModel(nullptr);
     m_testModel.reset();
+
+    m_floorInstance.SetModel(nullptr);
+    m_backWallInstance.SetModel(nullptr);
+    m_leftWallInstance.SetModel(nullptr);
+    m_rightWallInstance.SetModel(nullptr);
+
+    m_floorInstance.SetShader(nullptr);
+    m_backWallInstance.SetShader(nullptr);
+    m_leftWallInstance.SetShader(nullptr);
+    m_rightWallInstance.SetShader(nullptr);
+
+    m_testCubeModel.reset();
 
     m_flashlight.enabled = false;
 
@@ -607,27 +759,6 @@ void TestScene::Update(float deltaTime)
 
     m_flashlightVolume.outerAngle =
         m_flashlight.outerAngle;
-
-    // DEBUG ONLY
-    /*m_flashlightVolume.position =
-        Vector3{
-            0.0f,
-            1.0f,
-            3.0f
-    };
-
-    m_flashlightVolume.direction =
-        Vector3{
-            1.0f,
-            0.0f,
-            0.0f
-    };
-
-    m_flashlightVolume.range =
-        5.0f;
-
-    m_flashlightVolume.outerAngle =
-        0.35f;*/
 }
 
 void TestScene::Render()
@@ -683,6 +814,22 @@ void TestScene::Render()
     // test model
     m_renderer.Draw(
         m_testModelInstance);
+
+    // ------------------------------------------------------------
+    // Test room
+    // ------------------------------------------------------------
+
+    m_renderer.Draw(
+        m_floorInstance);
+
+    m_renderer.Draw(
+        m_backWallInstance);
+
+    m_renderer.Draw(
+        m_leftWallInstance);
+
+    m_renderer.Draw(
+        m_rightWallInstance);
 
     // flashlight cone
     /*if (m_volumetricShader &&
@@ -819,6 +966,15 @@ void TestScene::RenderDepth()
     m_renderer.SetCameraForward(
         m_camera.GetForward());
 
+    m_renderer.SetCameraRight(
+        m_camera.GetRight());
+
+    m_renderer.SetCameraUp(
+        m_camera.GetUp());
+
+    m_renderer.SetCameraFieldOfView(
+        m_camera.GetFieldOfView());
+
     // EN: Depth pass draws only opaque geometry that should
     //     block volumetric light.
     //
@@ -826,5 +982,28 @@ void TestScene::RenderDepth()
     //     Opaque Geometry のみを描画する。
     m_renderer.Draw(
         m_testModelInstance,
+        *m_sceneDepthShader);
+
+    // EN: The same opaque room geometry rendered in the color pass must
+    //     also participate in the scene-depth pass so it can terminate
+    //     volumetric rays correctly.
+    //
+    // JP: Color Pass で描画する同じ Opaque Room Geometry を
+    //     Scene Depth Pass にも参加させ、Volumetric Ray を
+    //     正しく遮断できるようにする。
+    m_renderer.Draw(
+        m_floorInstance,
+        *m_sceneDepthShader);
+
+    m_renderer.Draw(
+        m_backWallInstance,
+        *m_sceneDepthShader);
+
+    m_renderer.Draw(
+        m_leftWallInstance,
+        *m_sceneDepthShader);
+
+    m_renderer.Draw(
+        m_rightWallInstance,
         *m_sceneDepthShader);
 }

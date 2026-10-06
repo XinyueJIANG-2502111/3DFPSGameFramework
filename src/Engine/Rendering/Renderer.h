@@ -2,10 +2,14 @@
 
 #include <memory>
 
-// forward declaration
+
+//=============================================================================
+// Forward declarations
+//=============================================================================
+
 class IModelResource;
-class ModelInstance;
 class IShaderResource;
+class ModelInstance;
 class Shader;
 
 struct Vector3;
@@ -16,35 +20,26 @@ struct SpotLight;
 struct VolumetricCone;
 struct ShaderVolumetricData;
 
+
+//=============================================================================
+// IRendererBackend
+//=============================================================================
+
 class IRendererBackend
 {
 public:
     virtual ~IRendererBackend() = default;
 
+
+    //-------------------------------------------------------------------------
+    // Resource creation
+    //-------------------------------------------------------------------------
+
+    // EN: Creates a backend-specific model resource.
+    //
+    // JP: Backend 固有の Model Resource を生成する。
     virtual std::unique_ptr<IModelResource> CreateModelResource(
         const char* filePath) = 0;
-
-    virtual void Draw(
-        const ModelInstance& instance) = 0;
-
-    virtual void Draw(
-        const ModelInstance& instance,
-        const Shader& shader) = 0;
-
-    virtual void SetFog(
-        const FogSettings& settings) = 0;
-
-    virtual void SetClearColor(
-        const Vector3& color) = 0;
-
-    virtual void SetPointLight(
-        const PointLight& light) = 0;
-
-    virtual void SetSpotLight(
-        const SpotLight& light) = 0;
-
-    virtual void SetAmbientLight(
-        const AmbientLight& light) = 0;
 
     // EN: Creates a backend-specific shader resource.
     //
@@ -53,26 +48,10 @@ public:
         const char* vertexShaderPath,
         const char* pixelShaderPath) = 0;
 
-    virtual void SetCameraPosition(
-        const Vector3& position) = 0;
 
-    // EN: Updates the world-space camera forward direction for shaders.
-    //
-    // JP: Shader 用の World Space Camera Forward 方向を更新する。
-    virtual void SetCameraForward(
-        const Vector3& forward) = 0;
-
-    virtual void SetVolumetricSettings(
-        const ShaderVolumetricData& settings) = 0;
-
-    // EN: Draws a volumetric cone using an explicitly supplied shader.
-    //     The renderer borrows the shader for the duration of this draw call.
-    //
-    // JP: 明示的に渡された Shader を使用して Volumetric Cone を描画する。
-    //     Renderer はこの Draw Call 中だけ Shader を借用する。
-    virtual void DrawVolumetricCone(
-        const VolumetricCone& cone,
-        const Shader& shader) = 0;
+    //-------------------------------------------------------------------------
+    // Frame / render passes
+    //-------------------------------------------------------------------------
 
     virtual void BeginSceneRender(
         int width,
@@ -88,16 +67,81 @@ public:
 
     virtual void EndSceneDepthRender() = 0;
 
-    //=============================================================================
-    // shutdown
-    //=============================================================================
+
+    //-------------------------------------------------------------------------
+    // Camera
+    //-------------------------------------------------------------------------
+
+    virtual void SetCameraPosition(
+        const Vector3& position) = 0;
+
+    virtual void SetCameraForward(
+        const Vector3& forward) = 0;
+
+    virtual void SetCameraFieldOfView(
+        float verticalFovRadians) = 0;
+
+    virtual void SetCameraRight(
+        const Vector3& right) = 0;
+
+    virtual void SetCameraUp(
+        const Vector3& up) = 0;
+
+
+    //-------------------------------------------------------------------------
+    // Scene rendering state
+    //-------------------------------------------------------------------------
+
+    virtual void SetClearColor(
+        const Vector3& color) = 0;
+
+    virtual void SetFog(
+        const FogSettings& settings) = 0;
+
+    virtual void SetAmbientLight(
+        const AmbientLight& light) = 0;
+
+    virtual void SetPointLight(
+        const PointLight& light) = 0;
+
+    virtual void SetSpotLight(
+        const SpotLight& light) = 0;
+
+
+    //-------------------------------------------------------------------------
+    // Model drawing
+    //-------------------------------------------------------------------------
+
+    virtual void Draw(
+        const ModelInstance& instance) = 0;
+
+    virtual void Draw(
+        const ModelInstance& instance,
+        const Shader& shader) = 0;
+
+
+    //-------------------------------------------------------------------------
+    // Volumetric rendering
+    //-------------------------------------------------------------------------
+
+    virtual void SetVolumetricSettings(
+        const ShaderVolumetricData& settings) = 0;
+
+    virtual void DrawVolumetricCone(
+        const VolumetricCone& cone,
+        const Shader& shader) = 0;
+
+
+    //-------------------------------------------------------------------------
+    // Lifecycle
+    //-------------------------------------------------------------------------
+
     // EN: Releases backend-owned rendering resources before
     //     the graphics platform is shut down.
     //
-    // JP: Graphics Platform が終了する前に、Backend が所有する
-    //     Rendering Resource を解放する。
+    // JP: Graphics Platform が終了する前に、
+    //     Backend 所有の Rendering Resource を解放する。
     virtual void Shutdown() = 0;
-    //=============================================================================
 };
 
 class Renderer
@@ -106,42 +150,10 @@ public:
     explicit Renderer(
         IRendererBackend& backend);
 
-    // EN: Draws one model instance using its resource and transform.
-    //
-    // JP: Model Instance が保持する Resource と Transform を使用して
-    //     1 つの Model Instance を描画する。
-    void Draw(
-        const ModelInstance& instance);
 
-    void Draw(
-        const ModelInstance& instance,
-        const Shader& shader);
-
-    void SetFog(
-        const FogSettings& settings);
-
-    void SetClearColor(
-        const Vector3& color);
-
-    void SetPointLight(
-        const PointLight& light);
-
-    void SetSpotLight(
-        const SpotLight& light);
-
-    void SetAmbientLight(
-        const AmbientLight& light);
-
-    void SetCameraPosition(
-        const Vector3& position);
-
-    void SetCameraForward(
-        const Vector3& forward);
-
-    void SetVolumetricSettings(const ShaderVolumetricData& settings);
-    void DrawVolumetricCone(
-        const VolumetricCone& cone,
-        const Shader& shader);
+    //-------------------------------------------------------------------------
+    // Render passes
+    //-------------------------------------------------------------------------
 
     void BeginSceneRender(
         int width,
@@ -156,6 +168,79 @@ public:
         int height);
 
     void EndSceneDepthRender();
+
+
+    //-------------------------------------------------------------------------
+    // Camera shader data
+    //-------------------------------------------------------------------------
+
+    void SetCameraPosition(
+        const Vector3& position);
+
+    void SetCameraForward(
+        const Vector3& forward);
+
+    void SetCameraRight(
+        const Vector3& right);
+
+    void SetCameraUp(
+        const Vector3& up);
+
+    void SetCameraFieldOfView(
+        float verticalFovRadians);
+
+    
+    //-------------------------------------------------------------------------
+    // Scene rendering state
+    //-------------------------------------------------------------------------
+
+    void SetClearColor(
+        const Vector3& color);
+
+    void SetFog(
+        const FogSettings& settings);
+
+    void SetAmbientLight(
+        const AmbientLight& light);
+
+    void SetPointLight(
+        const PointLight& light);
+
+    void SetSpotLight(
+        const SpotLight& light);
+
+
+    //-------------------------------------------------------------------------
+    // Model drawing
+    //-------------------------------------------------------------------------
+
+    // EN: Draws a model instance using its configured rendering state.
+    //
+    // JP: Model Instance に設定された Rendering State を使用して描画する。
+    void Draw(
+        const ModelInstance& instance);
+
+    // EN: Draws a model instance using an explicitly supplied shader
+    //     without changing the shader stored by the instance.
+    //
+    // JP: Model Instance が保持する Shader を変更せず、
+    //     明示的に指定された Shader を使用して描画する。
+    void Draw(
+        const ModelInstance& instance,
+        const Shader& shader);
+
+
+    //-------------------------------------------------------------------------
+    // Volumetric rendering
+    //-------------------------------------------------------------------------
+
+    void SetVolumetricSettings(
+        const ShaderVolumetricData& settings);
+
+    void DrawVolumetricCone(
+        const VolumetricCone& cone,
+        const Shader& shader);
+
 
 private:
     IRendererBackend& m_backend;

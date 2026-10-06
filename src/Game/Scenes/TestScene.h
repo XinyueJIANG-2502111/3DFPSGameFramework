@@ -108,6 +108,18 @@ private:
     Renderer m_renderer;
     ModelInstance m_testModelInstance;
 
+    // EN: Shared unit-cube resource used to build simple static test-room
+    //     geometry without duplicating GPU model resources.
+    //
+    // JP: GPU Model Resource を重複させず、簡単な Static Test Room を
+    //     構築するために共有する Unit Cube Resource。
+    std::shared_ptr<Model> m_testCubeModel;
+
+    ModelInstance m_floorInstance;
+    ModelInstance m_backWallInstance;
+    ModelInstance m_leftWallInstance;
+    ModelInstance m_rightWallInstance;
+
 private:
     FogSettings m_fog;
     SpotLight m_flashlight;
