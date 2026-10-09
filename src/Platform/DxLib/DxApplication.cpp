@@ -2,8 +2,23 @@
 
 #include <DxLib.h>
 
+DxApplication::~DxApplication()
+{
+    // EN: Release the initialized DxLib runtime automatically
+    //     if explicit application shutdown was not performed.
+    //
+    // JP: 明示的な Application Shutdown が実行されなかった場合でも、
+    //     初期化済みの DxLib Runtime を自動的に解放する。
+    Shutdown();
+}
+
 bool DxApplication::Initialize()
 {
+    if (m_isInitialized)
+    {
+        return true;
+    }
+
     ChangeWindowMode(TRUE);
 
     // MSAA
@@ -13,6 +28,8 @@ bool DxApplication::Initialize()
     {
         return false;
     }
+
+    m_isInitialized = true;
 
     // version check
     const int direct3DVersion =
@@ -31,7 +48,20 @@ bool DxApplication::Initialize()
 
 void DxApplication::Shutdown()
 {
+    // EN: Make shutdown idempotent to support both explicit
+    //     shutdown and destructor-based fallback cleanup.
+    //
+    // JP: 明示的な Shutdown と Destructor による
+    //     Fallback Cleanup の両方を安全にするため、
+    //     Shutdown を冪等にする。
+    if (!m_isInitialized)
+    {
+        return;
+    }
+
     DxLib_End();
+
+    m_isInitialized = false;
 }
 
 bool DxApplication::ProcessEvents()

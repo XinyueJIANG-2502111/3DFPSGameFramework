@@ -5,6 +5,8 @@
 class DxApplication final : public IPlatform
 {
 public:
+    ~DxApplication() override;
+
     bool Initialize() override;
     void Shutdown() override;
 
@@ -14,4 +16,7 @@ public:
     void EndFrame() override;
 
     ScreenSize GetScreenSize() const override;
+
+private:
+    bool m_isInitialized = false;
 };

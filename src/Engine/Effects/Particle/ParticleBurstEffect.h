@@ -3,7 +3,11 @@
 #include "Engine/Effects/IVisualEffect.h"
 #include "Engine/Effects/Particle/Particle.h"
 #include "Engine/Rendering/Billboard/BillboardRenderData.h"
+#include <cstdint>
+#include <memory>
 #include <vector>
+
+class Texture;
 
 struct ParticleBurstDesc
 {
@@ -14,10 +18,25 @@ struct ParticleBurstDesc
     float speedMax = 2.5f;
     float lifetimeMin = 0.3f;
     float lifetimeMax = 0.8f;
-    float startSize = 0.1f;
-    float endSize = 0.0f;
+
+    Vector3 acceleration{};
+
+    float startWidth = 0.1f;
+    float endWidth = 0.0f;
+    float startHeight = 0.1f;
+    float endHeight = 0.0f;
+
+    float angularVelocityMin = 0.0f;
+    float angularVelocityMax = 0.0f;
+
+    BillboardBlendMode blendMode =
+        BillboardBlendMode::Additive;
+
+    std::shared_ptr<Texture> texture;
+
     Vector3 color{ 1.0f, 0.65f, 0.2f };
     float spread = 1.5f;
+    std::uint32_t randomSeed = 27u;
 };
 
 class ParticleBurstEffect final : public IVisualEffect
@@ -33,4 +52,7 @@ private:
     std::vector<Particle> m_particles;
     std::vector<BillboardRenderData> m_billboards;
     Vector3 m_color;
+    BillboardBlendMode m_blendMode =
+        BillboardBlendMode::Additive;
+    std::shared_ptr<Texture> m_texture;
 };

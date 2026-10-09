@@ -25,6 +25,8 @@ public:
 
     void RenderDepth();
 
+    void RenderOverlay();
+
     void Shutdown();
 
 private:

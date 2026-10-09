@@ -3,6 +3,8 @@
 #include "Engine/Debug/IDebugText.h"
 #include "Engine/Input/IInput.h"
 #include "Engine/Effects/Particle/ParticleBurstEffect.h"
+#include "Engine/Effects/Screen/LowHealthScreenEffect.h"
+#include "Game/Effects/GameEffectRecipes.h"
 #include "Engine/Physics/Collision/Intersection.h"
 #include "Engine/Rendering/Camera/ICameraBackend.h"
 
@@ -10,6 +12,7 @@
 
 #include "Engine/Rendering/Model/Model.h"
 #include "Engine/Rendering/Shader/Shader.h"
+#include "Engine/Rendering/Texture/Texture.h"
 #include "Engine/Rendering/Volumetric/ShaderVolumetricData.h"
 
 
@@ -115,6 +118,35 @@ TestScene::TestScene(
 void TestScene::OnEnter()
 {
     // ------------------------------------------------------------
+    // Texture resource test (Phase A)
+    // ------------------------------------------------------------
+    m_testTexture =
+        m_resourceSystem.LoadTexture(
+            "Assets/test.png");
+
+    assert(m_testTexture != nullptr);
+    assert(m_testTexture->IsValid());
+
+    const std::shared_ptr<Texture> cachedTexture =
+        m_resourceSystem.LoadTexture(
+            "Assets/test.png");
+
+    // EN: Identical normalized paths must reuse one shared resource.
+    //
+    // JP: ???????????????????????? Path ?????????? Shared Resource ??????????p????????B
+    assert(cachedTexture == m_testTexture);
+
+    m_bloodTexture =
+        m_resourceSystem.LoadTexture(
+            "Assets/Textures/BloodDroplet.png");
+    assert(m_bloodTexture != nullptr);
+    assert(m_bloodTexture->IsValid());
+
+    // EN: Start below the threshold so the overlay can be verified immediately.
+    // JP: Start the test health below the threshold.
+    m_testHealthRatio = 0.10f;
+
+    // ------------------------------------------------------------
     // shader test
     // ------------------------------------------------------------
     m_testShader =
@@ -125,13 +157,6 @@ void TestScene::OnEnter()
     assert(m_testShader != nullptr);
     assert(m_testShader->IsValid());
 
-    m_volumetricShader =
-        m_resourceSystem.LoadShader(
-            "Assets/Shaders/Source/VolumetricVS.vso",
-            "Assets/Shaders/Source/VolumetricPS.pso");
-
-    assert(m_volumetricShader != nullptr);
-    assert(m_volumetricShader->IsValid());
 
     m_sceneDepthShader =
         m_resourceSystem.LoadShader(
@@ -575,6 +600,7 @@ void TestScene::OnExit()
 
     m_testModelInstance.SetShader(nullptr);
     m_testShader.reset();
+    m_bloodTexture.reset();
     m_sceneDepthShader.reset();
 
     ShaderVolumetricData volumetric{};
@@ -588,6 +614,19 @@ void TestScene::Update(float deltaTime)
 {
     m_deltaTime = deltaTime;
     m_visualEffects.Update(deltaTime);
+
+    // EN: H lowers test health and J restores it without adding a health system.
+    // JP: H lowers test health and J restores it.
+    if (m_input.IsKeyPressed(KeyCode::H))
+    {
+        m_testHealthRatio = (m_testHealthRatio > 0.10f) ? m_testHealthRatio - 0.10f : 0.0f;
+    }
+    if (m_input.IsKeyPressed(KeyCode::J))
+    {
+        m_testHealthRatio = (m_testHealthRatio < 0.90f) ? m_testHealthRatio + 0.10f : 1.0f;
+    }
+    m_lowHealthEffect.SetHealthRatio(m_testHealthRatio);
+    m_lowHealthEffect.Update(deltaTime);
 
 
     // ------------------------------------------------------------
@@ -656,39 +695,78 @@ void TestScene::Update(float deltaTime)
     //     Camera Follow 後に生成し、今フレームの位置を使用する。
     if (m_input.IsKeyPressed(KeyCode::Space))
     {
-        ParticleBurstDesc burst;
-        burst.position = m_camera.GetTransform().position + m_camera.GetForward() * 3.0f;
-        burst.direction = -m_camera.GetForward();
+        const Vector3 sparkPosition =
+            m_camera.GetTransform().position +
+            m_camera.GetForward() * 3.0f;
+        const Vector3 sparkNormal =
+            -m_camera.GetForward();
+
+        // EN: TestScene selects a game recipe; the engine effect stays generic.
+        // JP: TestScene ???? Game Recipe ???????I??????????AEngine Effect ????????p?????????????B
+        ParticleBurstDesc burst =
+            MakeMetalSparkBurst(
+                sparkPosition,
+                sparkNormal,
+                m_testTexture,
+                27u);
         m_visualEffects.Add(std::make_unique<ParticleBurstEffect>(burst));
+    }
+
+    // EN: B is an edge-triggered gameplay input for the airborne blood spray.
+    //     The recipe uses alpha blending and never creates a surface decal.
+    if (m_input.IsKeyPressed(KeyCode::B))
+    {
+        const Vector3 bloodPosition =
+            m_camera.GetTransform().position +
+            m_camera.GetForward() * 3.0f;
+        const Vector3 bloodDirection =
+            -m_camera.GetForward();
+        ParticleBurstDesc bloodBurst =
+            MakeBloodSprayBurst(
+                bloodPosition,
+                bloodDirection,
+                m_bloodTexture,
+                73u);
+        m_visualEffects.Add(std::make_unique<ParticleBurstEffect>(bloodBurst));
     }
 
     // ------------------------------------------------------------
     // spotlight update
     // ------------------------------------------------------------
-    const Transform cameraTransform =
-        m_camera.GetTransform();
+    const Vector3 cameraPosition =
+        m_camera.GetTransform().position;
+    const Vector3 cameraForward =
+        m_camera.GetForward();
+    const Vector3 cameraRight =
+        m_camera.GetRight();
+    const Vector3 cameraUp =
+        m_camera.GetUp();
 
-    m_renderer.SetCameraPosition(
-        cameraTransform.position);
+    m_renderer.SetCameraPosition(cameraPosition);
+    m_renderer.SetCameraForward(cameraForward);
 
-    m_renderer.SetCameraForward(
-        m_camera.GetForward());
+    // EN: Keep this prototype's flashlight offset in camera-local space.
+    // JP: この試作の Flashlight Offset は Camera Local Space で指定する。
+    constexpr float kFlashlightOffsetRight = 0.05f;
+    constexpr float kFlashlightOffsetUp = -0.02f;
+    constexpr float kFlashlightOffsetForward = 0.05f;
 
+    // EN: Rebuild the offset from the camera basis every frame so the light
+    //     origin follows camera rotation as well as camera movement.
+    // JP: 毎フレーム Camera Basis から Offset を再構築し、Light Origin を
+    //     Camera の移動と回転の両方に追従させる。
     m_flashlight.position =
-        cameraTransform.position;
+        cameraPosition +
+        cameraRight * kFlashlightOffsetRight +
+        cameraUp * kFlashlightOffsetUp +
+        cameraForward * kFlashlightOffsetForward;
 
-    const Vector3 localForward{
-        0.0f,
-        0.0f,
-        1.0f
-    };
-
-    // EN: Attach the flashlight direction to the FPS camera forward direction.
-    //
-    // JP: Flashlight の方向を FPS Camera の Forward 方向に追従させる。
+    // EN: Change only the light origin in V1. Keep the beam axis parallel
+    //     to Camera Forward to assess the position offset independently.
+    // JP: V1 では Light Origin だけを変更する。Position Offset の影響を
+    //     単独で確認できるよう、Beam Axis は Camera Forward と平行に保つ。
     m_flashlight.direction =
-        cameraTransform.rotation.Rotate(
-            localForward);
+        cameraForward;
 
     m_renderer.SetSpotLight(
         m_flashlight);
@@ -740,40 +818,6 @@ void TestScene::Update(float deltaTime)
         m_collisionWorld.ComputeCollision(
             m_playerCollider,
             m_collisionHit);
-
-    // ------------------------------------------------------------
-    // flashlight volume
-    // ------------------------------------------------------------
-    const Vector3 cameraForward =
-        Normalize(m_flashlight.direction);
-
-    const float nearPlane =
-        m_camera.GetNearPlane();
-
-    const float volumetricStartOffset =
-        nearPlane + 0.01f > 0.25f
-        ? nearPlane + 0.01f
-        : 0.25f;
-
-    // EN: This debug shell starts beyond the near plane to avoid the
-    //     eye-at-apex projection degeneracy, not to reverse the beam.
-    //     Shorten its length so its end stays at the flashlight range.
-    //
-    // JP: 視点と頂点の一致による投影の退化を避けるため、
-    //     デバッグ外殻の頂点を近クリップ面より前へ移す。方向は反転しない。
-    //     終点を懐中電灯の到達距離に保つため、移動分だけ長さを短くする。
-    m_flashlightVolume.position =
-        m_flashlight.position +
-        cameraForward * volumetricStartOffset;
-
-    m_flashlightVolume.direction =
-        cameraForward;
-
-    m_flashlightVolume.range =
-        m_flashlight.range - volumetricStartOffset;
-
-    m_flashlightVolume.outerAngle =
-        m_flashlight.outerAngle;
 }
 
 void TestScene::Render()
@@ -849,15 +893,6 @@ void TestScene::Render()
     m_renderer.SetCameraRight(m_camera.GetRight());
     m_renderer.SetCameraUp(m_camera.GetUp());
     m_visualEffects.Render(m_renderer);
-
-    // flashlight cone
-    /*if (m_volumetricShader &&
-        m_volumetricShader->IsValid())
-    {
-        m_renderer.DrawVolumetricCone(
-            m_flashlightVolume,
-            *m_volumetricShader);
-    }*/
 
     // ------------------------------------------------------------
     // AABB Debug Rendering
@@ -956,6 +991,13 @@ void TestScene::Render()
         120,
         penetrationText.c_str());*/
 
+}
+
+void TestScene::RenderOverlay()
+{
+    // EN: This pass runs after volumetric composition and owns no world VFX.
+    // JP: Overlay pass follows volumetric lighting.
+    m_lowHealthEffect.Render(m_renderer);
 }
 
 void TestScene::RenderDepth()

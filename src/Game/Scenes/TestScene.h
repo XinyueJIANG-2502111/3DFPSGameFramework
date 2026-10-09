@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Effects/VisualEffectSystem.h"
+#include "Engine/Effects/Screen/LowHealthScreenEffect.h"
 
 #include "Engine/Scene/IScene.h"
 
@@ -27,8 +28,6 @@
 #include "Engine/Rendering/Lighting/SpotLight.h"
 #include "Engine/Rendering/Lighting/AmbientLight.h"
 
-#include "Engine/Rendering/Volumetric/VolumetricCone.h"
-
 #include "Engine/Math/Vector3.h"
 
 #include <memory>
@@ -37,6 +36,7 @@
 class Shader;
 
 class Model;
+class Texture;
 
 class IInput;
 class IDebugText;
@@ -63,6 +63,7 @@ public:
     void Update(float deltaTime) override;
     void Render() override;
     void RenderDepth() override;
+    void RenderOverlay() override;
 
 private:
     // EN: TestScene observes input through the engine abstraction rather
@@ -112,6 +113,8 @@ private:
     // EN: Scene ownership bounds VFX lifetime to this world's lifetime.
     // JP: Scene ÇÃèäóLå†Ç…ÇÊÇ¡Çƒ VFX ÇÃéıñΩÇÇ±ÇÃ World ÇÃéıñΩì‡Ç…å¿íËÇ∑ÇÈÅB
     VisualEffectSystem m_visualEffects;
+    LowHealthScreenEffect m_lowHealthEffect;
+    float m_testHealthRatio = 1.0f;
     ModelInstance m_testModelInstance;
 
     // EN: Shared unit-cube resource used to build simple static test-room
@@ -140,9 +143,16 @@ private:
 private:
     std::shared_ptr<Shader> m_testShader;
 
-    VolumetricCone m_flashlightVolume;
-
-    std::shared_ptr<Shader> m_volumetricShader;
-
     std::shared_ptr<Shader> m_sceneDepthShader;
+
+    // EN: Temporary Phase A validation keeps the loaded texture alive for
+    //     the scene and verifies ResourceSystem cache sharing on entry.
+    //
+    // JP: Phase A ???????????????[?????????????????????????????????? Texture ??????????????A
+    //     ResourceSystem ?????????? Cache ??L??????????????B
+    std::shared_ptr<Texture> m_testTexture;
+
+    // EN: Dedicated irregular blood sprite used by the alpha-blended spray.
+    // JP: Alpha Blend Blood Spray texture resource.
+    std::shared_ptr<Texture> m_bloodTexture;
 };

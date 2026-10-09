@@ -29,4 +29,6 @@ public:
     // EN: Scenes without opaque depth contributors may leave this pass empty.
     // JP: 深度へ寄与する不透明物体がないシーンでは、このパスを省略できる。
     virtual void RenderDepth() {}
+
+    virtual void RenderOverlay() {}
 };

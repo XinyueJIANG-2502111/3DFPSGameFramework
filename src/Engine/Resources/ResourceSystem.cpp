@@ -2,6 +2,7 @@
 
 #include "Engine/Rendering/Model/Model.h"
 #include "Engine/Rendering/Shader/Shader.h"
+#include "Engine/Rendering/Texture/Texture.h"
 
 #include <filesystem>
 #include <memory>
@@ -11,6 +12,7 @@ ResourceSystem::ResourceSystem(
     IRendererBackend& rendererBackend)
     : m_modelLoader(rendererBackend)
     , m_shaderLoader(rendererBackend)
+    , m_textureLoader(rendererBackend)
 {
 }
 
@@ -103,6 +105,40 @@ std::shared_ptr<Shader> ResourceSystem::LoadShader(
     return resource;
 }
 
+std::shared_ptr<Texture> ResourceSystem::LoadTexture(
+    const std::string& filePath)
+{
+    const std::string key =
+        NormalizePath(filePath);
+
+    const auto iterator =
+        m_textureCache.find(key);
+
+    if (iterator != m_textureCache.end())
+    {
+        if (std::shared_ptr<Texture> existing =
+            iterator->second.lock())
+        {
+            return existing;
+        }
+    }
+
+    std::unique_ptr<Texture> loaded =
+        m_textureLoader.Load(key.c_str());
+
+    if (!loaded)
+    {
+        return nullptr;
+    }
+
+    std::shared_ptr<Texture> resource =
+        std::move(loaded);
+
+    m_textureCache[key] = resource;
+
+    return resource;
+}
+
 void ResourceSystem::RemoveExpired()
 {
     for (auto iterator = m_modelCache.begin();
@@ -132,12 +168,27 @@ void ResourceSystem::RemoveExpired()
             ++iterator;
         }
     }
+
+    for (auto iterator = m_textureCache.begin();
+        iterator != m_textureCache.end();)
+    {
+        if (iterator->second.expired())
+        {
+            iterator =
+                m_textureCache.erase(iterator);
+        }
+        else
+        {
+            ++iterator;
+        }
+    }
 }
 
 void ResourceSystem::Clear()
 {
     m_modelCache.clear();
     m_shaderCache.clear();
+    m_textureCache.clear();
 }
 
 std::string ResourceSystem::NormalizePath(

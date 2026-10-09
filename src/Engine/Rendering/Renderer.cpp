@@ -74,6 +74,13 @@ void Renderer::RenderVolumetricLighting(
 // Camera shader data
 //=============================================================================
 
+void Renderer::DrawLowHealthOverlay(
+    const LowHealthScreenEffectData& data)
+{
+    m_backend.DrawLowHealthOverlay(
+        data);
+}
+
 void Renderer::SetCameraPosition(
     const Vector3& position)
 {
@@ -238,19 +245,9 @@ void Renderer::SetVolumetricSettings(
         settings);
 }
 
-void Renderer::DrawVolumetricCone(
-    const VolumetricCone& cone,
-    const Shader& shader)
-{
-    m_backend.DrawVolumetricCone(
-        cone,
-        shader);
-}
-
-
 void Renderer::DrawBillboards(
     std::span<const BillboardRenderData> billboards,
-    BillboardBlendMode blendMode)
+    const BillboardDrawSettings& settings)
 {
-    m_backend.DrawBillboards(billboards, blendMode);
+    m_backend.DrawBillboards(billboards, settings);
 }

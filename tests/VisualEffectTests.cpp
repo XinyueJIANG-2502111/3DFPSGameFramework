@@ -1,10 +1,14 @@
 ﻿#include "Engine/Effects/VisualEffectSystem.h"
 #include "Engine/Effects/Particle/ParticleBurstEffect.h"
+#include "Game/Effects/GameEffectRecipes.h"
+#include "Engine/Effects/Screen/LowHealthScreenEffect.h"
 #include "Engine/Rendering/Renderer.h"
 #include "Engine/Rendering/Model/IModelResource.h"
 #include "Engine/Rendering/Shader/IShaderResource.h"
+#include "Engine/Rendering/Texture/ITextureResource.h"
 #include "Platform/DxLib/DxInput.h"
 #include "DxLib.h"
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -20,14 +24,22 @@ class RecordingBackend final : public IRendererBackend
 public:
     std::vector<BillboardRenderData> data;
     int submissions = 0;
-    BillboardBlendMode mode{};
+    BillboardDrawSettings settings{};
+    int lowHealthCalls = 0;
+    LowHealthScreenEffectData lowHealthData{};
     std::unique_ptr<IModelResource> CreateModelResource(const char*) override { return {}; }
     std::unique_ptr<IShaderResource> CreateShaderResource(const char*, const char*) override { return {}; }
+    std::unique_ptr<ITextureResource> CreateTextureResource(const char*) override { return {}; }
     void BeginSceneRender(int, int) override {}
     void EndSceneRender(int, int) override {}
     void BeginSceneDepthRender(int, int) override {}
     void EndSceneDepthRender() override {}
     void RenderVolumetricLighting(int, int) override {}
+    void DrawLowHealthOverlay(const LowHealthScreenEffectData& effect) override
+    {
+        ++lowHealthCalls;
+        lowHealthData = effect;
+    }
     void SetCameraPosition(const Vector3&) override {}
     void SetCameraForward(const Vector3&) override {}
     void SetCameraRight(const Vector3&) override {}
@@ -41,14 +53,13 @@ public:
     void Draw(const ModelInstance&) override {}
     void Draw(const ModelInstance&, const Shader&) override {}
     void SetVolumetricSettings(const ShaderVolumetricData&) override {}
-    void DrawVolumetricCone(const VolumetricCone&, const Shader&) override {}
     void Shutdown() override {}
     void DrawBillboards(std::span<const BillboardRenderData> items,
-        BillboardBlendMode blend) override
+        const BillboardDrawSettings& drawSettings) override
     {
         ++submissions;
         data.assign(items.begin(), items.end());
-        mode = blend;
+        settings = drawSettings;
     }
 };
 
@@ -67,8 +78,83 @@ private:
 
 int main()
 {
+    const ParticleBurstDesc sparkRecipe =
+        MakeMetalSparkBurst(
+            Vector3{ 1.0f, 2.0f, 3.0f },
+            Vector3{ 0.0f, 0.0f, -1.0f },
+            nullptr,
+            99u);
+    assert(sparkRecipe.blendMode == BillboardBlendMode::Additive);
+    assert(sparkRecipe.particleCount >= 12);
+    assert(sparkRecipe.particleCount <= 24);
+    assert(sparkRecipe.startHeight > sparkRecipe.startWidth);
+    assert(sparkRecipe.acceleration.y < 0.0f);
+    assert(sparkRecipe.randomSeed == 99u);
+
+    const ParticleBurstDesc bloodRecipe =
+        MakeBloodSprayBurst(
+            Vector3{ 0.0f, 1.7f, 3.0f },
+            Vector3{ 0.0f, 0.0f, -1.0f },
+            nullptr,
+            77u);
+    assert(bloodRecipe.blendMode == BillboardBlendMode::Alpha);
+    assert(bloodRecipe.particleCount >= 20);
+    assert(bloodRecipe.particleCount <= 40);
+    assert(bloodRecipe.acceleration.y < -9.0f);
+    assert(bloodRecipe.startHeight > bloodRecipe.endHeight);
+    assert(bloodRecipe.angularVelocityMin < 0.0f);
+    assert(bloodRecipe.angularVelocityMax > 0.0f);
+    assert(bloodRecipe.color.x > bloodRecipe.color.y);
+    assert(bloodRecipe.randomSeed == 77u);
+
     RecordingBackend backend;
     Renderer renderer(backend);
+
+    LowHealthScreenEffect healthyEffect;
+    healthyEffect.SetHealthRatio(0.30f);
+    healthyEffect.Update(0.1f);
+    healthyEffect.Render(renderer);
+    assert(backend.lowHealthCalls == 0);
+
+    LowHealthScreenEffect lowEffect;
+    lowEffect.SetHealthRatio(0.20f);
+    lowEffect.Update(0.1f);
+    lowEffect.Render(renderer);
+    assert(backend.lowHealthCalls == 1);
+    const float moderateIntensity = backend.lowHealthData.intensity;
+
+    lowEffect.Update(0.5f);
+    lowEffect.Render(renderer);
+    assert(backend.lowHealthCalls == 2);
+    assert(std::abs(backend.lowHealthData.intensity - moderateIntensity) > 0.01f);
+
+    // The breathing signal must reach both a clearly dimmed and a clearly
+    // visible state over several frames, rather than remaining static.
+    float minimumPulse = 1.0f;
+    float maximumPulse = 0.0f;
+    for (int frame = 0; frame < 40; ++frame)
+    {
+        lowEffect.Update(0.1f);
+        lowEffect.Render(renderer);
+        if (backend.lowHealthCalls > 0)
+        {
+            minimumPulse =
+                std::min(minimumPulse, backend.lowHealthData.intensity);
+            maximumPulse =
+                std::max(maximumPulse, backend.lowHealthData.intensity);
+        }
+    }
+    assert(minimumPulse < 0.05f);
+    assert(maximumPulse > 0.30f);
+
+    const int callsBeforeCritical = backend.lowHealthCalls;
+    LowHealthScreenEffect criticalEffect;
+    criticalEffect.SetHealthRatio(0.0f);
+    criticalEffect.Update(0.1f);
+    criticalEffect.Render(renderer);
+    assert(backend.lowHealthCalls == callsBeforeCritical + 1);
+    assert(backend.lowHealthData.intensity > moderateIntensity);
+
     VisualEffectSystem effects;
     effects.Add(nullptr);
     effects.Update(0.0f);
@@ -82,17 +168,33 @@ int main()
     desc.spread = 0.0f;
     desc.speedMin = desc.speedMax = 2.0f;
     desc.lifetimeMin = desc.lifetimeMax = 0.8f;
+    desc.acceleration = Vector3{ 0.0f, -1.0f, 0.0f };
+    desc.startWidth = 0.2f;
+    desc.endWidth = 0.05f;
+    desc.startHeight = 0.4f;
+    desc.endHeight = 0.1f;
+    desc.angularVelocityMin = desc.angularVelocityMax = 1.0f;
+    desc.randomSeed = 123u;
     ParticleBurstEffect burst(desc);
     burst.Render(renderer);
     assert(backend.data.size() == 16);
-    assert(backend.mode == BillboardBlendMode::Additive);
+    assert(backend.settings.blendMode == BillboardBlendMode::Additive);
     assert(backend.data.front().position.z == 3.0f);
+    assert(backend.data.front().height == desc.startHeight);
     assert(backend.data.front().alpha == 1.0f);
     burst.Update(0.2f);
     burst.Render(renderer);
     assert(std::abs(backend.data.front().position.z - 2.6f) < 0.0001f);
+    assert(backend.data.front().position.y < desc.position.y);
+    assert(std::abs(backend.data.front().rotationRadians - 0.2f) < 0.0001f);
     assert(std::abs(backend.data.front().alpha - 0.75f) < 0.0001f);
-    assert(backend.data.front().size < desc.startSize);
+    assert(backend.data.front().width < desc.startWidth);
+
+    ParticleBurstDesc alphaDesc;
+    alphaDesc.blendMode = BillboardBlendMode::Alpha;
+    ParticleBurstEffect alphaBurst(alphaDesc);
+    alphaBurst.Render(renderer);
+    assert(backend.settings.blendMode == BillboardBlendMode::Alpha);
     burst.Update(-1.0f);
     burst.Update(std::numeric_limits<float>::quiet_NaN());
     burst.Render(renderer);
@@ -155,5 +257,5 @@ int main()
     effects.Render(renderer);
     assert(backend.submissions == finishedSubmissions);
     effects.Clear();
-    std::cout << "VFX tests passed: movement, fade, ownership, cleanup, repeated spawn, Space edge.\n";
+    std::cout << "VFX tests passed: movement, fade, ownership, cleanup, repeated spawn, Space edge, Blood recipe, Low health overlay.\n";
 }

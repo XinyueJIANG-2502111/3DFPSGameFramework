@@ -60,7 +60,6 @@
     <ClInclude Include="src\Engine\Rendering\Shader\ShaderLoader.h" />
     <ClInclude Include="src\Engine\Rendering\Shader\ShaderResourceAccess.h" />
     <ClInclude Include="src\Engine\Rendering\Volumetric\ShaderVolumetricData.h" />
-    <ClInclude Include="src\Engine\Rendering\Volumetric\VolumetricCone.h" />
     <ClInclude Include="src\Engine\Resources\ResourceSystem.h" />
     <ClInclude Include="src\Engine\Scene\IScene.h" />
     <ClInclude Include="src\Engine\Scene\SceneManager.h" />
@@ -113,7 +112,6 @@
     <ClCompile Include="src\Platform\DxLib\DxRenderer.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxBillboardRenderer.cpp" />
     <ClCompile Include="src\Platform\DxLib\DxShaderResource.cpp" />
-    <ClCompile Include="tests\VisualEffectTests.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -239,6 +237,22 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Game\Effects\GameEffectRecipes.h" />
+    <ClCompile Include="src\Game\Effects\GameEffectRecipes.cpp" />
+    <ClInclude Include="src\Engine\Effects\Screen\LowHealthScreenEffect.h" />
+    <ClCompile Include="src\Engine\Effects\Screen\LowHealthScreenEffect.cpp" />
+    <ClInclude Include="src\Engine\Rendering\Texture\ITextureResource.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\Texture.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\TextureImpl.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\TextureLoader.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\TextureResourceAccess.h" />
+    <ClInclude Include="src\Platform\DxLib\DxTextureResource.h" />
+    <ClCompile Include="src\Engine\Rendering\Texture\Texture.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Texture\TextureLoader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Texture\TextureResourceAccess.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxTextureResource.cpp" />
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Rendering\Billboard\BillboardRenderData.h" />
     <ClInclude Include="src\Engine\Effects\IVisualEffect.h" />

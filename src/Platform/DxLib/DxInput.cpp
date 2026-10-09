@@ -38,6 +38,15 @@ namespace
         case KeyCode::E:
             return KEY_INPUT_E;
 
+        case KeyCode::B:
+            return KEY_INPUT_B;
+
+        case KeyCode::H:
+            return KEY_INPUT_H;
+
+        case KeyCode::J:
+            return KEY_INPUT_J;
+
         default:
             return -1;
         }

@@ -265,17 +265,6 @@ float4 main(
             g_SpotLight.Direction);
 
 
-    // EN: Measure how closely this pixel ray follows
-    //     the spotlight forward axis.
-    //
-    // JP: この Pixel Ray が Spotlight Forward Axis と
-    //     どれだけ一致しているかを求める。
-    const float rayConeCos =
-        dot(
-            worldRay,
-            coneDirection);
-
-
     //-------------------------------------------------------------------------
     // Spotlight angular feather
     //-------------------------------------------------------------------------
@@ -293,92 +282,113 @@ float4 main(
 
 
     //-------------------------------------------------------------------------
-    // Finite cone membership
+    // Spotlight enabled state
     //-------------------------------------------------------------------------
 
     const bool spotlightEnabled =
         g_SpotLight.Enabled >
         0.5f;
 
-    const bool rayInsideCone =
-        rayConeCos >=
-        g_SpotLight.OuterCos;
-
-    const bool rayMovesForward =
-        rayConeCos >
-        0.0001f;
-
-
-    // EN: Pixels outside the active forward flashlight cone
-    //     contain no valid volumetric segment.
-    //
-    // JP: 有効な Forward Flashlight Cone の外側にある Pixel には
-    //     Volumetric Segment は存在しない。
-    if (!spotlightEnabled ||
-        !rayInsideCone ||
-        !rayMovesForward)
+    // EN: With separate camera and light origins, a camera ray can enter
+    //     the light cone later. Test cone membership at each march sample.
+    // JP: Camera と Light の Origin が異なると、Camera Ray は途中で
+    //     Light Cone に入るため、Cone 判定は各 March Sample で行う。
+    if (!spotlightEnabled)
     {
         return sceneColor;
     }
 
 
     //-------------------------------------------------------------------------
-    // Finite cone end-plane distance
+    // Spotlight range boundary
     //-------------------------------------------------------------------------
 
-    // EN: Measure the camera-ray origin relative to the spotlight apex.
+    // EN: SpotLight Range is defined as the maximum Euclidean distance
+    //     from the light origin. The volumetric ray therefore terminates
+    //     at the far intersection with this range sphere.
     //
-    // JP: Spotlight Apex を基準として Camera Ray Origin の位置を求める。
-    const float3 apexToRayOrigin =
+    // JP: SpotLight Range は Light Origin からの最大 Euclidean Distance
+    //     として定義する。そのため Volumetric Ray は、この Range Sphere
+    //     との Far Intersection で終了する。
+    const float safeLightRange =
+        max(
+            g_SpotLight.Range,
+            0.0001f);
+
+    const float rangeSquared =
+        safeLightRange *
+        safeLightRange;
+
+
+    // EN: Vector from the spotlight origin to the camera-ray origin.
+    //
+    // JP: SpotLight Origin から Camera Ray Origin へのベクトル。
+    const float3 lightToRayOrigin =
         g_Camera.Position -
         g_SpotLight.Position;
 
-
-    // EN: Axial position of the current ray origin relative to
-    //     the spotlight apex.
-    //
-    // JP: Spotlight Apex を基準とした
-    //     Ray Origin の Axis 方向位置。
-    const float originAxialDistance =
+    const float rayOriginDistanceSquared =
         dot(
-            apexToRayOrigin,
-            coneDirection);
+            lightToRayOrigin,
+            lightToRayOrigin);
 
 
-    // EN: Remaining axial distance to the finite cone end plane.
+    // EN: The current flashlight implementation expects the camera to
+    //     remain inside the spotlight's effective range.
     //
-    // JP: Finite Cone の End Plane まで残っている
-    //     Axis 方向距離。
-    const float remainingAxialDistance =
-        g_SpotLight.Range -
-        originAxialDistance;
-
-
-    const bool endPlaneIsAhead =
-        remainingAxialDistance >
-        0.0f;
-
-
-    // EN: Stop when the finite cone end plane lies behind
-    //     the current ray origin.
-    //
-    // JP: Finite Cone の End Plane が現在の Ray Origin より
-    //     後方にある場合は Volumetric Segment を生成しない。
-    if (!endPlaneIsAhead)
+    // JP: 現在の Flashlight 実装では Camera が SpotLight の
+    //     有効 Range 内に存在することを前提とする。
+    if (rayOriginDistanceSquared >=
+        rangeSquared)
     {
         return sceneColor;
     }
 
 
-    // EN: Distance along this pixel ray until it reaches
-    //     the finite flashlight cone end plane.
+    // EN: Solve the ray/sphere intersection for a normalized ray:
     //
-    // JP: この Pixel Ray が Finite Flashlight Cone の
-    //     End Plane に到達するまでの Ray 上の距離。
-    const float coneExitDistance =
-        remainingAxialDistance /
-        rayConeCos;
+    //     |O + tD|^2 = R^2
+    //
+    //     We need the far positive intersection because marching starts
+    //     at the camera and continues until the light range ends.
+    //
+    // JP: Normalized Ray に対する Ray / Sphere Intersection
+    //
+    //     |O + tD|^2 = R^2
+    //
+    //     を解く。Marching は Camera から開始するため、
+    //     Light Range 終端となる Far Positive Intersection を使用する。
+    const float rayOriginAlongRay =
+        dot(
+            lightToRayOrigin,
+            worldRay);
 
+    const float rangeDiscriminant =
+        rayOriginAlongRay *
+            rayOriginAlongRay -
+        (
+            rayOriginDistanceSquared -
+            rangeSquared
+        );
+
+    if (rangeDiscriminant <=
+        0.0f)
+    {
+        return sceneColor;
+    }
+
+    const float rangeExitDistance =
+        -rayOriginAlongRay +
+        sqrt(
+            max(
+                rangeDiscriminant,
+                0.0f));
+
+    if (rangeExitDistance <=
+        0.0001f)
+    {
+        return sceneColor;
+    }
 
     //-------------------------------------------------------------------------
     // Scene-depth clamp
@@ -395,16 +405,16 @@ float4 main(
 
 
     // EN: Terminate the ray at whichever comes first:
-    //     scene geometry or the flashlight cone end.
+    //     scene geometry or the spotlight range boundary.
     //
-    // JP: Scene Geometry と Flashlight Cone End のうち
+    // JP: Scene Geometry と SpotLight Range Boundary のうち
     //     手前側で Ray を終了する。
     const float raySegmentEnd =
         hasSceneSurface
         ? min(
-            coneExitDistance,
+            rangeExitDistance,
             sceneRayDistance)
-        : coneExitDistance;
+        : rangeExitDistance;
 
 
     //-------------------------------------------------------------------------
@@ -606,14 +616,6 @@ float4 main(
         //-------------------------------------------------------------------------
         // Spotlight distance attenuation
         //-------------------------------------------------------------------------
-
-        // EN: Normalize sample distance over the finite spotlight range.
-        //
-        // JP: Sample 距離を有限 Spotlight Range で正規化する。
-        const float safeLightRange =
-            max(
-                g_SpotLight.Range,
-                0.0001f);
 
         const float normalizedLightDistance =
             saturate(

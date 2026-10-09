@@ -15,6 +15,8 @@
     <ClCompile Include="VisualEffectTests.cpp" />
     <ClCompile Include="..\src\Engine\Effects\VisualEffectSystem.cpp" />
     <ClCompile Include="..\src\Engine\Effects\Particle\ParticleBurstEffect.cpp" />
+    <ClCompile Include="..\src\Engine\Effects\Screen\LowHealthScreenEffect.cpp" />
+    <ClCompile Include="..\src\Game\Effects\GameEffectRecipes.cpp" />
     <ClCompile Include="..\src\Engine\Rendering\Renderer.cpp" />
     <ClCompile Include="..\src\Platform\DxLib\DxInput.cpp" />
   </ItemGroup>

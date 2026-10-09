@@ -11,6 +11,7 @@
 
 class IModelResource;
 class IShaderResource;
+class ITextureResource;
 class ModelInstance;
 class Shader;
 
@@ -19,8 +20,12 @@ struct FogSettings;
 struct AmbientLight;
 struct PointLight;
 struct SpotLight;
-struct VolumetricCone;
 struct ShaderVolumetricData;
+
+struct LowHealthScreenEffectData
+{
+    float intensity = 0.0f;
+};
 
 
 //=============================================================================
@@ -50,6 +55,14 @@ public:
         const char* vertexShaderPath,
         const char* pixelShaderPath) = 0;
 
+    // EN: Creates a backend-specific texture resource without exposing
+    //     native graphics handles to Engine or Game code.
+    //
+    // JP: Native Graphics Handle ???? Engine ???? Game ????????J??????A
+    //     Backend ???????? Texture Resource ?????????????????B
+    virtual std::unique_ptr<ITextureResource> CreateTextureResource(
+        const char* filePath) = 0;
+
 
     //-------------------------------------------------------------------------
     // Frame / render passes
@@ -77,6 +90,9 @@ public:
     virtual void RenderVolumetricLighting(
         int width,
         int height) = 0;
+
+    virtual void DrawLowHealthOverlay(
+        const LowHealthScreenEffectData& data) = 0;
 
 
     //-------------------------------------------------------------------------
@@ -133,7 +149,7 @@ public:
 
     virtual void DrawBillboards(
         std::span<const BillboardRenderData> billboards,
-        BillboardBlendMode blendMode) = 0;
+        const BillboardDrawSettings& settings) = 0;
 
     //-------------------------------------------------------------------------
     // Volumetric rendering
@@ -141,11 +157,6 @@ public:
 
     virtual void SetVolumetricSettings(
         const ShaderVolumetricData& settings) = 0;
-
-    virtual void DrawVolumetricCone(
-        const VolumetricCone& cone,
-        const Shader& shader) = 0;
-
 
     //-------------------------------------------------------------------------
     // Lifecycle
@@ -190,6 +201,9 @@ public:
     void RenderVolumetricLighting(
         int width,
         int height);
+
+    void DrawLowHealthOverlay(
+        const LowHealthScreenEffectData& data);
 
 
     //-------------------------------------------------------------------------
@@ -254,7 +268,7 @@ public:
 
     void DrawBillboards(
         std::span<const BillboardRenderData> billboards,
-        BillboardBlendMode blendMode);
+        const BillboardDrawSettings& settings);
 
     //-------------------------------------------------------------------------
     // Volumetric rendering
@@ -262,11 +276,6 @@ public:
 
     void SetVolumetricSettings(
         const ShaderVolumetricData& settings);
-
-    void DrawVolumetricCone(
-        const VolumetricCone& cone,
-        const Shader& shader);
-
 
 private:
     IRendererBackend& m_backend;

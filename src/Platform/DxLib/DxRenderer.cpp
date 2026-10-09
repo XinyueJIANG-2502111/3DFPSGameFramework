@@ -18,6 +18,7 @@
 
 #include "Platform/DxLib/DxModelResource.h"
 #include "Platform/DxLib/DxShaderResource.h"
+#include "Platform/DxLib/DxTextureResource.h"
 
 #include <algorithm>
 #include <cmath>
@@ -51,6 +52,18 @@ namespace
 
         return result;
     }
+}
+
+DxRenderer::~DxRenderer()
+{
+    // EN: Release renderer-owned native resources automatically.
+    //     Application still performs explicit shutdown first to
+    //     ensure resources are released before DxLib_End().
+    //
+    // JP: Renderer が所有する Native Resource を自動解放する。
+    //     DxLib_End() より前に解放する順序を保証するため、
+    //     Application は引き続き明示的な Shutdown を行う。
+    Shutdown();
 }
 
 void DxRenderer::Draw(
@@ -247,6 +260,22 @@ DxRenderer::CreateModelResource(
 {
     auto resource =
         std::make_unique<DxModelResource>(
+            filePath);
+
+    if (!resource->IsValid())
+    {
+        return nullptr;
+    }
+
+    return resource;
+}
+
+std::unique_ptr<ITextureResource>
+DxRenderer::CreateTextureResource(
+    const char* filePath)
+{
+    auto resource =
+        std::make_unique<DxTextureResource>(
             filePath);
 
     if (!resource->IsValid())
@@ -867,454 +896,6 @@ void DxRenderer::UpdateVolumetricConstantBuffer()
         7);
 }
 
-void DxRenderer::DrawVolumetricCone(
-    const VolumetricCone& cone,
-    const Shader& shader)
-{
-    constexpr int SegmentCount = 20;
-    constexpr int LayerCount = 3;
-    constexpr float TwoPi = 6.28318530718f;
-
-    // ------------------------------------------------------------
-    // Validate input
-    // ------------------------------------------------------------
-
-    if (cone.range <= 0.0f)
-    {
-        return;
-    }
-
-    const VECTOR rawForward =
-        VGet(
-            cone.direction.x,
-            cone.direction.y,
-            cone.direction.z);
-
-    const float forwardLength =
-        VSize(rawForward);
-
-    if (forwardLength <= 0.0001f)
-    {
-        return;
-    }
-
-
-    // ------------------------------------------------------------
-    // Access backend shader resource
-    // ------------------------------------------------------------
-
-    const IShaderResource* shaderResource =
-        ShaderResourceAccess::Get(
-            shader);
-
-    const auto* dxShader =
-        dynamic_cast<const DxShaderResource*>(
-            shaderResource);
-
-    if (dxShader == nullptr ||
-        !dxShader->IsValid())
-    {
-        return;
-    }
-
-
-    // ------------------------------------------------------------
-    // Build cone basis
-    // ------------------------------------------------------------
-
-    const VECTOR forward =
-        VNorm(rawForward);
-
-
-    // EN: Select a reference axis that is not nearly parallel
-    //     to the cone forward direction.
-    //
-    // JP: Cone の Forward Direction とほぼ平行にならない
-    //     Reference Axis を選択する。
-    const VECTOR referenceAxis =
-        std::abs(forward.y) < 0.99f
-        ? VGet(
-            0.0f,
-            1.0f,
-            0.0f)
-        : VGet(
-            1.0f,
-            0.0f,
-            0.0f);
-
-
-    // EN: Construct an orthonormal basis around the cone axis.
-    //
-    // JP: Cone Axis を中心とした直交 Basis を構築する。
-    const VECTOR right =
-        VNorm(
-            VCross(
-                referenceAxis,
-                forward));
-
-    const VECTOR up =
-        VNorm(
-            VCross(
-                forward,
-                right));
-
-
-    // ------------------------------------------------------------
-    // Build shared cone geometry data
-    // ------------------------------------------------------------
-
-    const VECTOR apex =
-        VGet(
-            cone.position.x,
-            cone.position.y,
-            cone.position.z);
-
-
-    // EN: Direction semantics are apex -> beam end,
-    //     therefore the cone base lies along +forward.
-    //
-    // JP: Direction は Apex から Beam End へ向かうため、
-    //     Cone Base は +Forward 側に配置する。
-    const VECTOR baseCenter =
-        VAdd(
-            apex,
-            VScale(
-                forward,
-                cone.range));
-
-
-    VERTEX3DSHADER vertices[
-        SegmentCount *
-            LayerCount *
-            3]{};
-
-
-        const COLOR_U8 specularColor =
-            GetColorU8(
-                0,
-                0,
-                0,
-                0);
-
-
-        struct VolumetricLayer
-        {
-            float angleScale;
-            float weight;
-        };
-
-
-        constexpr VolumetricLayer Layers[
-            LayerCount]
-        {
-            // Outer
-            {
-                1.00f,
-                0.20f
-            },
-
-            // Middle
-            {
-                0.72f,
-                0.35f
-            },
-
-            // Inner
-            {
-                0.42f,
-                0.55f
-            }
-        };
-
-
-        // ------------------------------------------------------------
-        // Build nested cone layers
-        // ------------------------------------------------------------
-
-        for (int layerIndex = 0;
-            layerIndex < LayerCount;
-            ++layerIndex)
-        {
-            const VolumetricLayer& layer =
-                Layers[layerIndex];
-
-
-            // EN: Each nested layer uses a smaller half-angle while
-            //     preserving the same origin and beam end distance.
-            //
-            // JP: 各 Nested Layer は同じ Origin と Beam Distance を保ち、
-            //     より小さい Half Angle を使用する。
-            const float layerAngle =
-                cone.outerAngle *
-                layer.angleScale;
-
-            const float radius =
-                std::tan(layerAngle) *
-                cone.range;
-
-
-            const float clampedWeight =
-                (std::clamp)(
-                    layer.weight,
-                    0.0f,
-                    1.0f);
-
-            const unsigned char layerAlpha =
-                static_cast<unsigned char>(
-                    clampedWeight *
-                    255.0f);
-
-
-            const COLOR_U8 diffuseColor =
-                GetColorU8(
-                    255,
-                    255,
-                    255,
-                    layerAlpha);
-
-
-            for (int i = 0;
-                i < SegmentCount;
-                ++i)
-            {
-                const float angle0 =
-                    TwoPi *
-                    static_cast<float>(i) /
-                    static_cast<float>(
-                        SegmentCount);
-
-                const float angle1 =
-                    TwoPi *
-                    static_cast<float>(i + 1) /
-                    static_cast<float>(
-                        SegmentCount);
-
-
-                const VECTOR radial0 =
-                    VAdd(
-                        VScale(
-                            right,
-                            std::cos(angle0) *
-                            radius),
-                        VScale(
-                            up,
-                            std::sin(angle0) *
-                            radius));
-
-
-                const VECTOR radial1 =
-                    VAdd(
-                        VScale(
-                            right,
-                            std::cos(angle1) *
-                            radius),
-                        VScale(
-                            up,
-                            std::sin(angle1) *
-                            radius));
-
-
-                const VECTOR base0 =
-                    VAdd(
-                        baseCenter,
-                        radial0);
-
-                const VECTOR base1 =
-                    VAdd(
-                        baseCenter,
-                        radial1);
-
-
-                const int triangleIndex =
-                    layerIndex *
-                    SegmentCount +
-                    i;
-
-                const int vertexIndex =
-                    triangleIndex *
-                    3;
-
-
-                VERTEX3DSHADER& v0 =
-                    vertices[
-                        vertexIndex + 0];
-
-                VERTEX3DSHADER& v1 =
-                    vertices[
-                        vertexIndex + 1];
-
-                VERTEX3DSHADER& v2 =
-                    vertices[
-                        vertexIndex + 2];
-
-
-                // ----------------------------------------------------
-                // Position
-                // ----------------------------------------------------
-
-                v0.pos = apex;
-                v1.pos = base0;
-                v2.pos = base1;
-
-
-                // ----------------------------------------------------
-                // Normal
-                // ----------------------------------------------------
-
-                // EN: The current volumetric shader does not use
-                //     geometric normals yet, but VERTEX3DSHADER still
-                //     receives a valid fallback normal.
-                //
-                // JP: 現在の Volumetric Shader では Geometry Normal を
-                //     使用しないが、有効な Fallback Normal を設定する。
-                const VECTOR dummyNormal =
-                    VScale(
-                        forward,
-                        -1.0f);
-
-                v0.norm = dummyNormal;
-                v1.norm = dummyNormal;
-                v2.norm = dummyNormal;
-
-
-                // ----------------------------------------------------
-                // Vertex color
-                // ----------------------------------------------------
-
-                v0.dif = diffuseColor;
-                v1.dif = diffuseColor;
-                v2.dif = diffuseColor;
-
-                v0.spc = specularColor;
-                v1.spc = specularColor;
-                v2.spc = specularColor;
-
-
-                // ----------------------------------------------------
-                // Texture coordinates
-                // ----------------------------------------------------
-
-                v0.u = 0.0f;
-                v0.v = 0.0f;
-                v0.su = 0.0f;
-                v0.sv = 0.0f;
-
-                v1.u = 0.0f;
-                v1.v = 0.0f;
-                v1.su = 0.0f;
-                v1.sv = 0.0f;
-
-                v2.u = 0.0f;
-                v2.v = 0.0f;
-                v2.su = 0.0f;
-                v2.sv = 0.0f;
-            }
-        }
-
-
-        // ------------------------------------------------------------
-        // Render state
-        // ------------------------------------------------------------
-
-        int previousBlendMode = 0;
-        int previousBlendParam = 0;
-
-        GetDrawBlendMode(
-            &previousBlendMode,
-            &previousBlendParam);
-
-        const int previousBackCulling =
-            GetUseBackCulling();
-
-
-        // EN: The camera may be inside the volume, so both sides of
-        //     the cone shell must remain visible during this V1 pass.
-        //
-        // JP: Camera が Volume 内部に入る可能性があるため、
-        //     V1 Pass では Cone Shell を両面描画する。
-        SetUseBackCulling(
-            FALSE);
-
-
-        // EN: Test against scene depth, but do not let this transparent
-        //     volume overwrite the depth buffer.
-        //
-        // JP: Scene Depth との判定は行うが、
-        //     半透明 Volume 自体は Depth Buffer に書き込まない。
-        SetDepthTest(
-            TRUE);
-
-        SetDepthWrite(
-            FALSE);
-
-
-        SetDrawBlendMode(
-            DX_BLENDMODE_ALPHA,
-            160);
-
-
-        // ------------------------------------------------------------
-        // Activate volumetric shader
-        // ------------------------------------------------------------
-
-        SetUseVertexShader(
-            dxShader->GetVertexShaderHandle());
-
-        SetUsePixelShader(
-            dxShader->GetPixelShaderHandle());
-
-
-        // EN: The volumetric shader uses both the current spotlight
-        //     state and dedicated volumetric parameters.
-        //
-        // JP: Volumetric Shader は現在の SpotLight State と
-        //     専用 Volumetric Parameter の両方を使用する。
-        UpdateLightingConstantBuffer();
-        UpdateVolumetricConstantBuffer();
-
-
-        // ------------------------------------------------------------
-        // Draw
-        // ------------------------------------------------------------
-
-        DrawPolygon3DToShader(
-            vertices,
-            SegmentCount *
-            LayerCount);
-
-
-        // ------------------------------------------------------------
-        // Clear shader state
-        // ------------------------------------------------------------
-
-        SetUseVertexShader(-1);
-        SetUsePixelShader(-1);
-
-
-        // ------------------------------------------------------------
-        // Restore render state
-        // ------------------------------------------------------------
-
-        SetDrawBlendMode(
-            previousBlendMode,
-            previousBlendParam);
-
-        SetUseBackCulling(
-            previousBackCulling);
-
-
-        // EN: Current renderer code assumes normal scene rendering
-        //     uses depth testing and depth writing after this pass.
-        //
-        // JP: 現在の Renderer では、この Pass 後の通常描画が
-        //     Depth Test と Depth Write を使用する前提で戻す。
-        SetDepthTest(
-            TRUE);
-
-        SetDepthWrite(
-            TRUE);
-}
-
 void DxRenderer::EnsureSceneRenderTarget(
     int width,
     int height)
@@ -1640,11 +1221,40 @@ void DxRenderer::RenderVolumetricLighting(
         DX_BLENDMODE_NOBLEND,
         0);
 
-    DrawCameraRayDebug(
+    DrawVolumetricLightingFullscreen(
         width,
         height);
 }
 
+void DxRenderer::DrawLowHealthOverlay(
+    const LowHealthScreenEffectData& data)
+{
+    if (!std::isfinite(data.intensity) || data.intensity <= 0.0f)
+    {
+        return;
+    }
+
+    const float intensity = std::clamp(data.intensity, 0.0f, 1.0f);
+    const bool previousDepthTest = m_depthTest;
+    const bool previousDepthWrite = m_depthWrite;
+    const bool previousLighting = m_lighting;
+    int previousBlendMode = DX_BLENDMODE_NOBLEND;
+    int previousBlendParam = 0;
+    GetDrawBlendMode(&previousBlendMode, &previousBlendParam);
+
+    // EN: Overlay uses no depth and alpha blending, then restores changed state.
+    // JP: Overlay uses no depth and alpha blending, then restores changed state.
+    SetDrawScreen(DX_SCREEN_BACK);
+    SetDepthTest(false);
+    SetDepthWrite(false);
+    SetLighting(false);
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+    DrawLowHealthOverlayFullscreen(intensity);
+    SetDrawBlendMode(previousBlendMode, previousBlendParam);
+    SetDepthTest(previousDepthTest);
+    SetDepthWrite(previousDepthWrite);
+    SetLighting(previousLighting);
+}
 void DxRenderer::EnsureSceneDepthDebugShader()
 {
     if (m_sceneDepthDebugPixelShaderHandle !=
@@ -1825,25 +1435,25 @@ void DxRenderer::DrawSceneDepthDebug(
         -1);
 }
 
-void DxRenderer::EnsureCameraRayDebugShader()
+void DxRenderer::EnsureVolumetricLightingShader()
 {
-    if (m_cameraRayDebugPixelShaderHandle !=
+    if (m_volumetricLightingPixelShaderHandle !=
         InvalidHandle)
     {
         return;
     }
 
-    // EN: Load the temporary fullscreen shader used to
-    //     validate screen-space ray coordinates.
+    // EN: Load the production fullscreen shader responsible for
+    //     depth-aware volumetric-lighting composition.
     //
-    // JP: Screen-Space Ray Coordinate を検証するための
-    //     Temporary Fullscreen Shader を読み込む。
-    m_cameraRayDebugPixelShaderHandle =
+    // JP: Depth-Aware Volumetric Lighting Composition を担当する
+    //     Production Fullscreen Shader を Load する。
+    m_volumetricLightingPixelShaderHandle =
         LoadPixelShader(
-            "Assets/Shaders/Source/CameraRayDebugPS.pso");
+            "Assets/Shaders/Source/VolumetricLightingPS.pso");
 }
 
-void DxRenderer::DrawCameraRayDebug(
+void DxRenderer::DrawVolumetricLightingFullscreen(
     int width,
     int height)
 {
@@ -1853,9 +1463,9 @@ void DxRenderer::DrawCameraRayDebug(
         return;
     }
 
-    EnsureCameraRayDebugShader();
+    EnsureVolumetricLightingShader();
 
-    if (m_cameraRayDebugPixelShaderHandle ==
+    if (m_volumetricLightingPixelShaderHandle ==
         InvalidHandle)
     {
         return;
@@ -2010,7 +1620,7 @@ void DxRenderer::DrawCameraRayDebug(
         m_sceneColorHandle);
 
     SetUsePixelShader(
-        m_cameraRayDebugPixelShaderHandle);
+        m_volumetricLightingPixelShaderHandle);
 
     DrawPolygon2DToShader(
         vertices,
@@ -2025,8 +1635,69 @@ void DxRenderer::DrawCameraRayDebug(
         -1);
 }
 
+void DxRenderer::EnsureLowHealthOverlayShader()
+{
+    if (m_lowHealthOverlayPixelShaderHandle != InvalidHandle)
+    {
+        return;
+    }
+
+    m_lowHealthOverlayPixelShaderHandle =
+        LoadPixelShader(
+            "Assets/Shaders/Source/LowHealthOverlayPS.pso");
+}
+
+void DxRenderer::DrawLowHealthOverlayFullscreen(
+    float intensity)
+{
+    EnsureLowHealthOverlayShader();
+    if (m_lowHealthOverlayPixelShaderHandle == InvalidHandle)
+    {
+        return;
+    }
+
+    VERTEX2DSHADER vertices[6]{};
+
+
+
+    const COLOR_U8 white = GetColorU8(255, 255, 255, static_cast<int>(intensity * 255.0f));
+
+
+
+    const COLOR_U8 black = GetColorU8(0, 0, 0, 0);
+    const float left = -0.5f;
+    const float top = -0.5f;
+    const float right = static_cast<float>(m_sceneColorWidth) - 0.5f;
+    const float bottom = static_cast<float>(m_sceneColorHeight) - 0.5f;
+    auto setVertex = [&](VERTEX2DSHADER& vertex, float x, float y, float u, float v)
+    {
+        vertex.pos = VGet(x, y, 0.0f);
+        vertex.rhw = 1.0f;
+        vertex.dif = white;
+        vertex.spc = black;
+        vertex.u = u;
+        vertex.v = v;
+        vertex.su = u;
+        vertex.sv = v;
+    };
+    setVertex(vertices[0], left, top, 0.0f, 0.0f);
+    setVertex(vertices[1], right, top, 1.0f, 0.0f);
+    setVertex(vertices[2], left, bottom, 0.0f, 1.0f);
+    setVertex(vertices[3], left, bottom, 0.0f, 1.0f);
+    setVertex(vertices[4], right, top, 1.0f, 0.0f);
+    setVertex(vertices[5], right, bottom, 1.0f, 1.0f);
+    SetUsePixelShader(m_lowHealthOverlayPixelShaderHandle);
+    DrawPolygon2DToShader(vertices, 2);
+    SetUsePixelShader(-1);
+}
 void DxRenderer::Shutdown()
 {
+    if (m_lowHealthOverlayPixelShaderHandle != InvalidHandle)
+    {
+        DeleteShader(m_lowHealthOverlayPixelShaderHandle);
+        m_lowHealthOverlayPixelShaderHandle = InvalidHandle;
+    }
+
     if (m_spotLightHandle != InvalidHandle)
     {
         DeleteLightHandle(
@@ -2106,13 +1777,13 @@ void DxRenderer::Shutdown()
             InvalidHandle;
     }
 
-    if (m_cameraRayDebugPixelShaderHandle !=
+    if (m_volumetricLightingPixelShaderHandle !=
         InvalidHandle)
     {
         DeleteShader(
-            m_cameraRayDebugPixelShaderHandle);
+            m_volumetricLightingPixelShaderHandle);
 
-        m_cameraRayDebugPixelShaderHandle =
+        m_volumetricLightingPixelShaderHandle =
             InvalidHandle;
     }
 }

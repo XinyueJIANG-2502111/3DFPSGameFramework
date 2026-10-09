@@ -27,9 +27,10 @@ struct ShaderSpotLightData
     // JP: SpotLight の World Space 上の位置。
     Vector3 position{};
 
-    // EN: Maximum effective distance of the spotlight.
+    // EN: Maximum effective Euclidean distance measured from the
+    //     spotlight origin.
     //
-    // JP: SpotLight が影響する最大距離。
+    // JP: SpotLight Origin から測定する最大有効 Euclidean Distance。
     float range = 0.0f;
 
 

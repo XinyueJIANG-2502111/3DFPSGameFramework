@@ -203,9 +203,6 @@
     <ClInclude Include="src\Engine\Rendering\Volumetric\ShaderVolumetricData.h">
       <Filter>02-Engine\4-Rendering\Volumetric</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\Volumetric\VolumetricCone.h">
-      <Filter>02-Engine\4-Rendering\Volumetric</Filter>
-    </ClInclude>
     <ClInclude Include="src\Engine\Rendering\Camera\Camera.h">
       <Filter>02-Engine\4-Rendering\Camera</Filter>
     </ClInclude>
@@ -358,9 +355,6 @@
     <ClCompile Include="src\Engine\Rendering\Shader\ShaderResourceAccess.cpp">
       <Filter>02-Engine\4-Rendering\Shader</Filter>
     </ClCompile>
-    <ClCompile Include="tests\VisualEffectTests.cpp">
-      <Filter>02-Engine\0-Test</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine\Rendering\Billboard\BillboardRenderData.h">
@@ -392,5 +386,21 @@
     <Filter Include="02-Engine\6-Effects" />
     <Filter Include="02-Engine\6-Effects\Particle" />
     <Filter Include="02-Engine\4-Rendering\Billboard" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Game\Effects\GameEffectRecipes.h" />
+    <ClCompile Include="src\Game\Effects\GameEffectRecipes.cpp" />
+    <ClInclude Include="src\Engine\Effects\Screen\LowHealthScreenEffect.h" />
+    <ClCompile Include="src\Engine\Effects\Screen\LowHealthScreenEffect.cpp" />
+    <ClInclude Include="src\Engine\Rendering\Texture\ITextureResource.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\Texture.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\TextureImpl.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\TextureLoader.h" />
+    <ClInclude Include="src\Engine\Rendering\Texture\TextureResourceAccess.h" />
+    <ClInclude Include="src\Platform\DxLib\DxTextureResource.h" />
+    <ClCompile Include="src\Engine\Rendering\Texture\Texture.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Texture\TextureLoader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\Texture\TextureResourceAccess.cpp" />
+    <ClCompile Include="src\Platform\DxLib\DxTextureResource.cpp" />
   </ItemGroup>
 </Project>

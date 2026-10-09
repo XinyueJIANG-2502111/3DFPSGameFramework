@@ -6,9 +6,11 @@
 
 #include "Engine/Rendering/Model/ModelLoader.h"
 #include "Engine/Rendering/Shader/ShaderLoader.h"
+#include "Engine/Rendering/Texture/TextureLoader.h"
 
 class Model;
 class Shader;
+class Texture;
 class IRendererBackend;
 
 class ResourceSystem
@@ -49,6 +51,13 @@ public:
         const std::string& vertexShaderPath,
         const std::string& pixelShaderPath);
 
+    // EN: Loads or reuses a Texture resource identified by its path.
+    //
+    // JP: Path ?????????????????????????? Texture Resource ?????????????
+    //     ???????????????????? Resource ????????????p????????B
+    std::shared_ptr<Texture> LoadTexture(
+        const std::string& filePath);
+
 private:
     ModelLoader m_modelLoader;
 
@@ -61,6 +70,12 @@ private:
     std::unordered_map<
         std::string,
         std::weak_ptr<Shader>> m_shaderCache;
+
+    TextureLoader m_textureLoader;
+
+    std::unordered_map<
+        std::string,
+        std::weak_ptr<Texture>> m_textureCache;
 
     // EN: Converts an asset path into a stable cache key so that
     //     equivalent paths identify the same runtime resource.

@@ -17,6 +17,9 @@ enum class KeyCode
 
     R,
     E,
+    B,
+    H,
+    J,
 
     Count
 };

@@ -1,5 +1,6 @@
 ﻿#include "Engine/Effects/Particle/ParticleBurstEffect.h"
 #include "Engine/Rendering/Renderer.h"
+#include "Engine/Rendering/Texture/Texture.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,12 +9,22 @@
 
 ParticleBurstEffect::ParticleBurstEffect(const ParticleBurstDesc& desc)
     : m_color(desc.color)
+    , m_blendMode(desc.blendMode)
+    , m_texture(desc.texture)
 {
     const int count = std::max(desc.particleCount, 0);
     const float speedMin = std::max(desc.speedMin, 0.0f);
     const float speedMax = std::max(desc.speedMax, speedMin);
     const float lifetimeMin = std::max(desc.lifetimeMin, 0.001f);
     const float lifetimeMax = std::max(desc.lifetimeMax, lifetimeMin);
+    const float startWidth = std::max(desc.startWidth, 0.0f);
+    const float endWidth = std::max(desc.endWidth, 0.0f);
+    const float startHeight = std::max(desc.startHeight, 0.0f);
+    const float endHeight = std::max(desc.endHeight, 0.0f);
+    const float angularVelocityMin =
+        std::min(desc.angularVelocityMin, desc.angularVelocityMax);
+    const float angularVelocityMax =
+        std::max(desc.angularVelocityMin, desc.angularVelocityMax);
     Vector3 direction = Normalize(desc.direction);
     if (direction.LengthSquared() == 0.0f)
     {
@@ -23,10 +34,13 @@ ParticleBurstEffect::ParticleBurstEffect(const ParticleBurstDesc& desc)
     //     random service. Each burst still owns independent particles.
     // JP: 固定 Seed で V1 の検証を再現可能にし、Global Random Service を不要にする。
     //     各 Burst の Particle は独立して所有される。
-    std::mt19937 random(27);
+    std::mt19937 random(desc.randomSeed);
     std::uniform_real_distribution<float> unit(0.0f, 1.0f);
     std::uniform_real_distribution<float> speed(speedMin, speedMax);
     std::uniform_real_distribution<float> lifetime(lifetimeMin, lifetimeMax);
+    std::uniform_real_distribution<float> angularVelocity(
+        angularVelocityMin,
+        angularVelocityMax);
     m_particles.reserve(count);
     m_billboards.reserve(count);
     for (int i = 0; i < count; ++i)
@@ -43,11 +57,17 @@ ParticleBurstEffect::ParticleBurstEffect(const ParticleBurstDesc& desc)
         {
             velocityDirection = direction;
         }
-        m_particles.push_back(Particle{
-            desc.position, velocityDirection * speed(random),
-            0.0f, lifetime(random),
-            std::max(desc.startSize, 0.0f), std::max(desc.endSize, 0.0f)
-        });
+        Particle particle;
+        particle.position = desc.position;
+        particle.velocity = velocityDirection * speed(random);
+        particle.acceleration = desc.acceleration;
+        particle.lifetime = lifetime(random);
+        particle.startWidth = startWidth;
+        particle.endWidth = endWidth;
+        particle.startHeight = startHeight;
+        particle.endHeight = endHeight;
+        particle.angularVelocity = angularVelocity(random);
+        m_particles.push_back(particle);
     }
     RebuildBillboards();
 }
@@ -61,7 +81,10 @@ void ParticleBurstEffect::Update(float deltaTime)
     for (auto& particle : m_particles)
     {
         particle.age += deltaTime;
+        particle.velocity += particle.acceleration * deltaTime;
         particle.position += particle.velocity * deltaTime;
+        particle.rotationRadians +=
+            particle.angularVelocity * deltaTime;
     }
     std::erase_if(m_particles, [](const Particle& particle) {
         return particle.age >= particle.lifetime;
@@ -75,21 +98,29 @@ void ParticleBurstEffect::RebuildBillboards()
     for (const auto& particle : m_particles)
     {
         const float t = std::clamp(particle.age / particle.lifetime, 0.0f, 1.0f);
-        m_billboards.push_back(BillboardRenderData{
-            particle.position,
-            std::lerp(particle.startSize, particle.endSize, t),
-            m_color, 1.0f - t
-        });
+        BillboardRenderData billboard;
+        billboard.position = particle.position;
+        billboard.width =
+            std::lerp(particle.startWidth, particle.endWidth, t);
+        billboard.height =
+            std::lerp(particle.startHeight, particle.endHeight, t);
+        billboard.rotationRadians = particle.rotationRadians;
+        billboard.color = m_color;
+        billboard.alpha = 1.0f - t;
+        m_billboards.push_back(billboard);
     }
 }
 
 void ParticleBurstEffect::Render(Renderer& renderer) const
 {
-    // EN: Additive sparks avoid requiring transparent depth sorting in V1.
-    //     Renderer receives only drawing data, never particle lifetime logic.
-    // JP: V1 では加算合成の Spark を使い、透明描画の深度 Sort を不要にする。
-    //     Renderer には描画データだけを渡し、Particle の寿命処理を持たせない。
-    renderer.DrawBillboards(m_billboards, BillboardBlendMode::Additive);
+    // EN: The effect selects the batch blend mode and texture, while the
+    //     renderer still owns all backend state and draw-call details.
+    // JP: Effect は Batch の Blend Mode と Texture を選択し、Renderer は
+    //     Backend State と Draw Call の詳細だけを管理する。
+    BillboardDrawSettings settings;
+    settings.blendMode = m_blendMode;
+    settings.texture = m_texture.get();
+    renderer.DrawBillboards(m_billboards, settings);
 }
 
 bool ParticleBurstEffect::IsFinished() const

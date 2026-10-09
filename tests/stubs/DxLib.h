@@ -10,6 +10,9 @@
 #define KEY_INPUT_ESCAPE 8
 #define KEY_INPUT_R 9
 #define KEY_INPUT_E 10
+#define KEY_INPUT_B 11
+#define KEY_INPUT_H 12
+#define KEY_INPUT_J 13
 #define MOUSE_INPUT_LEFT 1
 #define MOUSE_INPUT_RIGHT 2
 #define MOUSE_INPUT_MIDDLE 4

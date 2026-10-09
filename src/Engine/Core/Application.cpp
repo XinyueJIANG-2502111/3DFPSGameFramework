@@ -194,5 +194,9 @@ void Application::Render()
         size.height);
 
 
+    // EN: Screen overlay is composed after volumetric lighting.
+    // JP: Overlay pass follows volumetric lighting.
+    m_sceneManager.RenderOverlay();
+
     m_platform.EndFrame();
 }

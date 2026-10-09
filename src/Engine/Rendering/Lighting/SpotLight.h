@@ -37,9 +37,10 @@ struct SpotLight
     // JP: Light 全体の明るさを調整する倍率。
     float intensity = 1.0f;
 
-    // EN: Maximum effective distance of the spotlight.
+    // EN: Maximum effective Euclidean distance measured from the
+    //     spotlight origin.
     //
-    // JP: SpotLight が影響する最大距離。
+    // JP: SpotLight Origin から測定する最大有効 Euclidean Distance。
     float range = 15.0f;
 
     // EN: Fully illuminated inner cone angle in radians.
